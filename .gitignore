@@ -1,0 +1,14 @@
+.idea
+build
+cmake-build-debug
+obj
+target
+Cargo.lock
+*.swo
+*.swp
+*.txt
+*.vi
+tags
+*.orig
+log.md
+diskfile
