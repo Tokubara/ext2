@@ -12,24 +12,78 @@ const u32 BLOCK_SIZE = 512;
 const u32 EFS_MAGIC = 0x3b800001;
 const u32 INODE_BITMAP_BLOCKS = 1; // 这样的话, 总共能创建512*8个文件和目录
 const u32 INODE_NUM_PER_BLOCK = 4;
+const u32 INDEX_NO_PER_BLOCK = BLOCK_SIZE/sizeof(u32);
+const u32 NAME_LENGTH_LIMIT = 27;
+const u32 INODE_DIRECT_NUM = 27; // TODO
+const u32 FILE_MAX_BLOCK_NUM = INODE_DIRECT_NUM+INDEX_NO_PER_BLOCK+INDEX_NO_PER_BLOCK*INDEX_NO_PER_BLOCK;
+
+/**
+ * ceiling(x/y)
+ */
+inline u32 ceiling(u32 x, u32 y) {
+  return (x+y-1)/y;
+}
 
 inline int trailing_ones( uint32_t in ) {
   return ~ in == 0? 32 : __builtin_ctz( ~ in );
 }
 
+enum class FileType {
+  REG,
+  DIR
+};
+
+struct DirEntry {
+    char name[NAME_LENGTH_LIMIT + 1];
+    u32 inode_number;
+};
+
 struct Inode {
   u32 find(std::string path);
-  i32 increase_size(u32 block_num);
+  i32 increase_size(u32 need) {
+    return 0;
+  }
   i32 read_at(u32 offset, u32 len, u8* buffer);
-  i32 write_at(u32 offset, u32 len, const u8* buffer);
+/**
+ * 根据文件大小, 计算需要的索引块和数据块数的总和
+ * */
+  static  u32 get_block_num_by_size(const u32 size)  {
+    u32 data_block_num = ceiling(size, BLOCK_SIZE);
+      assert(data_block_num<=FILE_MAX_BLOCK_NUM);
+      u32 total=data_block_num;
+      if(data_block_num>INODE_DIRECT_NUM) {
+        total+=1; // 一级索引块
+        data_block_num-=INODE_DIRECT_NUM;
+        if(data_block_num>INDEX_NO_PER_BLOCK) { // 需要二级索引块
+          total+=1;
+          data_block_num-=INDEX_NO_PER_BLOCK;
+          total+=ceiling(data_block_num, INDEX_NO_PER_BLOCK);
+        }
+      }
+      return total;
+    }
+
+    i32 write_at(u32 offset, u32 len, const u8* buffer) {
+    u32 cur_block_num = get_block_num_by_size(size); // TODO: 为了过编
+    return cur_block_num;
+  }
 /**
  * 初始化目录
  * @return
  */
-    i32 initialize_dir() {
-
+    i32 initialize(FileType file_type) {
+      switch(file_type) {
+        case FileType::REG : {
+          TODO();
+          break;
+        }
+        case FileType::DIR : {
+        }
+      }
       return 0;
     }
+public:
+  u32 size; // 文件的字节数大小
 };
 
 struct BlockDevice {
@@ -86,15 +140,7 @@ struct Bitmap {
     }
 };
 
-/**
- * ceiling(x/y)
- * @param x
- * @param y
- * @return
- */
-inline u32 ceiling(u32 x, u32 y) {
-return (x+y-1)/y;
-}
+
 
 struct SuperBlock {
     u32 magic;
@@ -124,7 +170,7 @@ struct Ext2 {
       u32 root_inode_id = inode_bitmap->alloc();
       assert(root_inode_id==0);
       this->root = root+root_inode_id;
-      root->initialize_dir();
+      root->initialize(FileType::DIR);
     }
     Inode* get_inode_from_id(const u32 inode_id) const {
       return root+inode_id;
@@ -137,29 +183,37 @@ struct Ext2 {
 };
 
 int main() {
-  BlockDevice block_device{"diskfile"};
-  Bitmap bitmap{3,1,&block_device};
-  u32 ret;
-  for(u32 i = 0; i<3*8*BLOCK_SIZE; i++) {
-    ret = bitmap.alloc();
-    Assert(ret==i, "alloc:%u, should:%u", ret, i);
-  }
-  for(u32 i = 0; i<3*8*BLOCK_SIZE; i++) {
-    bitmap.dealloc(i);
-  }
-  for(u32 i = 0; i<3*8*BLOCK_SIZE; i++) {
-    ret = bitmap.alloc();
-    Assert(ret==i, "alloc:%u, should:%u", ret, i);
-  }
-  for(u32 i = 0; i<3*8*BLOCK_SIZE; i++) {
-    bitmap.dealloc(i);
-  }
-  for(u32 i = 0; i<3*8*BLOCK_SIZE; i++) {
-    ret = bitmap.alloc();
-    Assert(ret==0, "alloc:%u, should:%u", ret, 0);
-    bitmap.dealloc(0);
-  }
+//  BlockDevice block_device{"diskfile"};
+//  Bitmap bitmap{3,1,&block_device};
+//  u32 ret;
+//  for(u32 i = 0; i<3*8*BLOCK_SIZE; i++) {
+//    ret = bitmap.alloc();
+//    Assert(ret==i, "alloc:%u, should:%u", ret, i);
+//  }
+//  for(u32 i = 0; i<3*8*BLOCK_SIZE; i++) {
+//    bitmap.dealloc(i);
+//  }
+//  for(u32 i = 0; i<3*8*BLOCK_SIZE; i++) {
+//    ret = bitmap.alloc();
+//    Assert(ret==i, "alloc:%u, should:%u", ret, i);
+//  }
+//  for(u32 i = 0; i<3*8*BLOCK_SIZE; i++) {
+//    bitmap.dealloc(i);
+//  }
+//  for(u32 i = 0; i<3*8*BLOCK_SIZE; i++) {
+//    ret = bitmap.alloc();
+//    Assert(ret==0, "alloc:%u, should:%u", ret, 0);
+//    bitmap.dealloc(0);
+//  }
 //  Ext2 ext2{};
 //  std::cout << "Hello, World!" << std::endl;
+// {{{2 对get_block_num_by_size的测试
+  assert(Inode::get_block_num_by_size(0)==0);
+assert(Inode::get_block_num_by_size(3)==1);
+  assert(Inode::get_block_num_by_size(513)==2);
+  assert(Inode::get_block_num_by_size(13824)==27); // 13824=27*512
+  assert(Inode::get_block_num_by_size(13825)==29); // 13824=27*512
+  assert(Inode::get_block_num_by_size(79360)==27+128+1); // 79360=(27+128)*512
+  assert(Inode::get_block_num_by_size(79361)==27+128+1+ 1+1+1);
   return 0;
 }
