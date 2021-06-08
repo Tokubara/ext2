@@ -39,8 +39,10 @@ int main() {
 //  assert(Inode::get_block_num_by_size(13825)==29); // 13824=27*512
 //  assert(Inode::get_block_num_by_size(79360)==27+128+1); // 79360=(27+128)*512
 //  assert(Inode::get_block_num_by_size(79361)==27+128+1+ 1+1+1);
-  Ext2 ext2 = Ext2::create(&block_device, block_device.block_num);
-  Ext2 ext2_ = Ext2::open(&block_device);
+  Ext2 ext2;
+  ext2.create(&block_device, block_device.block_num);
+  Ext2 ext2_;
+  ext2_.open(&block_device);
   log_trace("%u",ext2.data_area_start_block);
   log_trace("%u",ext2_.data_area_start_block);
   return 0;
