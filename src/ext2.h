@@ -21,12 +21,15 @@ struct SuperBlock {
 };
 
 struct Ext2 {
-    Ext2(BlockDevice* block_device, u32 total_blocks,  u32 inode_bitmap_blocks = INODE_BITMAP_BLOCKS);
+    static Ext2 create(BlockDevice* block_device, u32 total_blocks, u32 inode_bitmap_blocks = INODE_BITMAP_BLOCKS);
     Inode* get_inode_from_id(const u32 inode_id) const;
     Inode* root;
     BlockDevice* block_device; // 这里存引用真的靠谱么
     Bitmap* inode_bitmap;
     Bitmap* data_bitmap;
+    u32 inode_area_start_block;
+    u32 data_area_start_block;
+    static Ext2 open(BlockDevice*);
 };
 
 #endif //EXT2_EXT2_H

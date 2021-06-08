@@ -28,12 +28,17 @@ struct Inode {
  * 初始化目录
  * @return
  */
-    i32 initialize(FileType file_type);
+    i32 initialize_dir(u32 self_inode_number);
 public:
     struct DiskInode { // disk上也有的
         u32 size; // 文件的字节数大小
-    } diskInode;
+        u32 direct[INODE_DIRECT_NUM];
+        u32 indirect1;
+        u32 indirect2;
+//        u32 inode_number;
+    } disk_inode;
     Ext2* fs;
 
+    u32 logic_to_phy_block_id(u32 logic_id);
 };
 #endif //EXT2_INODE_H
