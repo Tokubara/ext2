@@ -67,7 +67,8 @@ struct Bitmap {
       for(u32 i = 0; i < total_bytes_num; i++) {
         if(bitmap_block[i]!=0xFF) {
           u32 in_byte_offset = trailing_ones(bitmap_block[i]);
-          assert( ((bitmap_block[i]>>in_byte_offset)&1u) >0);
+          bitmap_block[i]|=(1u<<in_byte_offset);
+//          assert( ((bitmap_block[i]>>in_byte_offset)&1u) >0);
           return i*8+in_byte_offset;
         }
       }
@@ -77,7 +78,7 @@ struct Bitmap {
     void dealloc(u32 bit_id) {
       u32 block_id = bit_id/8;
       u32 in_byte_offset = bit_id%8;
-      bitmap_block[block_id]|=(1u<<in_byte_offset);
+      bitmap_block[block_id]&=~(1u<<in_byte_offset);
     }
     Bitmap(u32 blocks, u32 start_block_id, BlockDevice* block_device):block_num(blocks), start_block_id(start_block_id), block_device(block_device) {
       bitmap_block = block_device->get_block_cache(start_block_id);
@@ -138,20 +139,24 @@ struct Ext2 {
 int main() {
   BlockDevice block_device{"diskfile"};
   Bitmap bitmap{3,1,&block_device};
+  u32 ret;
   for(u32 i = 0; i<3*8*BLOCK_SIZE; i++) {
-    assert(bitmap.alloc()==i);
+    ret = bitmap.alloc();
+    Assert(ret==i, "alloc:%u, should:%u", ret, i);
   }
   for(u32 i = 0; i<3*8*BLOCK_SIZE; i++) {
     bitmap.dealloc(i);
   }
   for(u32 i = 0; i<3*8*BLOCK_SIZE; i++) {
-    assert(bitmap.alloc()==i);
+    ret = bitmap.alloc();
+    Assert(ret==i, "alloc:%u, should:%u", ret, i);
   }
   for(u32 i = 0; i<3*8*BLOCK_SIZE; i++) {
     bitmap.dealloc(i);
   }
   for(u32 i = 0; i<3*8*BLOCK_SIZE; i++) {
-    assert(bitmap.alloc()==0);
+    ret = bitmap.alloc();
+    Assert(ret==0, "alloc:%u, should:%u", ret, 0);
     bitmap.dealloc(0);
   }
 //  Ext2 ext2{};
