@@ -15,7 +15,7 @@ Inode::Inode(Ext2 *ext2, DiskInode *disk_inode, u32 inode_number) : disk_inode(d
  * i32是因为可能失败, 但是目前不做处理
  * */
 i32 Inode::increase_size(u32 new_size) {
-  log_trace("enter, new_size: %u, cur_size: %u", new_size, this->disk_inode->size);
+  // log_trace("enter, new_size: %u, cur_size: %u", new_size, this->disk_inode->size);
   // TODO
 //  assert(sizeof this->disk_inode==128);
   if (new_size <= this->disk_inode->size) return 0;
@@ -36,7 +36,7 @@ i32 Inode::increase_size(u32 new_size) {
   assert(fs != nullptr); // TODO fs
   for (u32 i = 0; i < need; i++) {
     block_id.push(fs->alloc_data());
-    log_debug("alloc %u", block_id.back());
+//    log_debug("alloc %u", block_id.back());
   }
 
 
@@ -138,7 +138,7 @@ i32 Inode::initialize_dir(u32 parent_inode_number = 0) {
   memcpy(dir[1].name, "..", sizeof(".."));
   this->write_at(0, sizeof(DirEntry) * 2, (u8 *) dir);
 
-  log_trace("first data block id:%u", this->disk_inode->direct[0]);
+//  log_trace("first data block id:%u", this->disk_inode->direct[0]);
   return 0;
 }
 
@@ -226,7 +226,7 @@ Inode Inode::create(const char *name, FileType type) {
   u32 new_inode_number = this->fs->alloc_inode();
   DiskInode *new_disk_inode = this->fs->get_disk_inode_from_id(new_inode_number);
   Inode inode{this->fs, new_disk_inode, new_inode_number};
-  log_trace("new inode number: %u, its parent inode number: %u", new_inode_number, this->disk_inode->inode_number);
+//  log_trace("new inode number: %u, its parent inode number: %u", new_inode_number, this->disk_inode->inode_number);
   if (type == FileType::DIR) {
     inode.initialize_dir(this->disk_inode->inode_number);
   } else if(type == FileType::REG) {
@@ -243,4 +243,26 @@ Inode Inode::create(const char *name, FileType type) {
 
 void Inode::initialize_regfile() const {
   this->disk_inode->initialize(FileType::REG);
+}
+
+// 与ls的实现差不多
+Inode Inode::find(const std::string& name, i32 *ret) const {
+  *ret = -1;
+  assert(this->disk_inode->file_type == FileType::DIR);
+
+  u32 dir_num = this->disk_inode->size / sizeof(DirEntry);
+  auto *dir_entries = new DirEntry[dir_num];
+  this->read_at(0, this->disk_inode->size, (u8 *) dir_entries);
+
+  for (u32 i = 0; i < dir_num; i++) {
+    if(dir_entries[i].name==name && is_valid(dir_entries[i].inode_number)) {
+      *ret = 0;
+      return Inode{this->fs,this->disk_inode,dir_entries->inode_number};
+    }
+  }
+  return Inode(nullptr, nullptr, 0);
+}
+
+bool Inode::is_valid(u32 number) {
+  return number!=0xfffffff;
 }

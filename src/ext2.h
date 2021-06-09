@@ -4,6 +4,8 @@
 
 #ifndef EXT2_EXT2_H
 #define EXT2_EXT2_H
+
+#include <queue>
 #include "common.h"
 #include "BlockDevice.h"
 #include "bitmap.h"
@@ -31,8 +33,12 @@ struct Ext2 {
     u32 inode_area_start_block;
     u32 data_area_start_block;
     void open(BlockDevice*);
-    u32 alloc_data();
-    u32 alloc_inode();
+    u32 alloc_data() const;
+    u32 alloc_inode() const;
+
+    Inode find_inode_by_full_path(const char *path,  i32* ret) const;
+
+    static std::queue<std::string> split_path(const char *path);
 };
 
 #endif //EXT2_EXT2_H

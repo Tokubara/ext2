@@ -7,6 +7,7 @@
 #include "ext2.h"
 
 int main() {
+  i32 ret;
   BlockDevice block_device{"diskfile"};
 //  Bitmap bitmap{3,1,&block_device};
 //  u32 ret;
@@ -53,6 +54,19 @@ int main() {
   for(u32 i = 0; i<10; i++) {
     putchar(buf[i]);
   }
+  Inode dir0 = ext2_.root->create("dir0", FileType::DIR);
+  dir0.ls();
+  Inode file1 = dir0.create("file1", FileType::DIR);
+  auto file1_content = "I still hate you";
+  file1.write_at(0, strlen(file1_content),(u8*)file1_content);
+  file1.read_at(0,10,buf);
+  for(u32 i = 0; i<10; i++) {
+    putchar(buf[i]);
+  }
+  Inode tmp = ext2_.find_inode_by_full_path("/dir0/file1", &ret);
+  assert(tmp.disk_inode->file_type==FileType::REG);
+  tmp = ext2_.find_inode_by_full_path("file3", &ret);
+  assert(ret==-1);
 //  ext2_.root->ls();
 //  log_trace("%u",ext2.data_area_start_block);
 //  log_trace("%u",ext2_.data_area_start_block);

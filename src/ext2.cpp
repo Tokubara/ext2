@@ -3,6 +3,7 @@
 //
 
 #include "ext2.h"
+#include <queue>
 
 i32 Ext2::create(BlockDevice* block_device, u32 total_blocks, u32 inode_bitmap_blocks)  {
         // {{{2 计算块数划分, 创建超级块
@@ -48,10 +49,57 @@ void Ext2::open(BlockDevice* block_device) {
 //        return Ext2(block_device, )
 }
 
-u32 Ext2::alloc_data() {
+u32 Ext2::alloc_data() const {
         return this->data_bitmap->alloc()+this->data_area_start_block;
 }
 
-u32 Ext2::alloc_inode() {
+u32 Ext2::alloc_inode() const {
         return this->inode_bitmap->alloc(); // 分配inode号与alloc_data并不对称, 本来就是从0开始
+}
+
+
+
+/**
+ * 需要维护ret
+ *
+ * */
+Inode Ext2::find_inode_by_full_path(const char *path,  i32* ret) const {
+        *ret=-1;
+        if(path[0]!='/') {
+                log_error("invalid path");
+                return Inode{nullptr, nullptr,0};
+        }
+        std::queue<std::string> path_tokens_str = split_path(path);
+        std::string name;
+        Inode* dir = this->root;
+        while(!path_tokens_str.empty()) {
+                name = path_tokens_str.front();
+                path_tokens_str.pop();
+                if(dir->disk_inode->file_type!=FileType::DIR) {
+                        return Inode{nullptr, nullptr,0};
+                }
+                *dir = dir->find(name, ret);
+                if(*ret<0) return Inode{nullptr, nullptr,0};
+        }
+        *ret=0;
+
+        return *dir;
+}
+
+std::queue<std::string> Ext2::split_path(const char *path) {
+        std::string path_str(path);
+        std::queue<std::string> path_tokens_str;
+        u64 pos;
+        std::string s;
+        while ((pos = path_str.find('/')) != std::string::npos) {
+                s = path_str.substr(0, pos);
+                if (s.length() != 0) {
+                        path_tokens_str.push(std::move(s));
+                }
+                path_str.erase(0, pos + 1);
+        }
+        if (path_str.length() > 0) {
+                path_tokens_str.push(path_str);
+        }
+        return path_tokens_str;
 }
