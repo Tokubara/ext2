@@ -26,7 +26,7 @@ i32 Inode::increase_size(u32 new_size) {
   assert(fs!=nullptr); // TODO fs
   for(u32 i = 0; i < need; i++) {
     block_id.push(fs->alloc_data());
-    log_debug("alloc %u", block_id.back());
+//    log_debug("alloc %u", block_id.back());
   }
 
   // 为方便, 计算数据块数
@@ -184,4 +184,32 @@ void DiskInode::initialize(FileType type) {
   this->indirect1=0;
   this->indirect2=0;
   this->file_type = type;
+}
+
+i32 Inode::read_at(u32 offset, u32 len, u8* buffer) const {
+  assert(offset+len<=this->disk_inode->size);
+  u32 in_offset = offset%BLOCK_SIZE;
+  u32 logic_block_id = offset/BLOCK_SIZE;
+  u32 cur_len = 0;
+  while(cur_len<len) {
+    u32 phy_block_id = logic_to_phy_block_id(logic_block_id);
+    u8* file_block = this->fs->block_device->get_block_cache(phy_block_id);
+    file_block+=in_offset;
+    memcpy(buffer+cur_len, file_block,std::min(len-cur_len,BLOCK_SIZE-in_offset));
+    in_offset=0;
+    cur_len+=std::min(len-cur_len,BLOCK_SIZE-in_offset);
+    logic_block_id++;
+  }
+  return 0;
+}
+
+void Inode::ls() const {
+  assert(this->disk_inode->file_type==FileType::DIR);
+
+  u32 dir_num = this->disk_inode->size/sizeof(DirEntry);
+  auto* dir_entries = new DirEntry[dir_num];
+  this->read_at(0,this->disk_inode->size,(u8*)dir_entries);
+  for(u32 i = 0; i < dir_num; i++) {
+    printf("%s\n", dir_entries[i].name);
+  }
 }

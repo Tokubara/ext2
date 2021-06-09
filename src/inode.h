@@ -29,7 +29,8 @@ struct Inode {
     Inode(Ext2* ext2, DiskInode* disk_inode);
     u32 find(std::string path);
     i32 increase_size(u32 need);
-    i32 read_at(u32 offset, u32 len, u8* buffer);
+    void ls() const;
+    i32 read_at(u32 offset, u32 len, u8* buffer) const;
 /**
  * 根据文件大小, 计算需要的索引块和数据块数的总和, 已测试
  * */

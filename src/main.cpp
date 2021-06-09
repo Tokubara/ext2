@@ -43,7 +43,8 @@ int main() {
   ext2.create(&block_device, block_device.block_num);
   Ext2 ext2_;
   ext2_.open(&block_device);
-  log_trace("%u",ext2.data_area_start_block);
-  log_trace("%u",ext2_.data_area_start_block);
+  ext2_.root->ls();
+//  log_trace("%u",ext2.data_area_start_block);
+//  log_trace("%u",ext2_.data_area_start_block);
   return 0;
 }
