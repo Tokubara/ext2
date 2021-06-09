@@ -41,7 +41,7 @@ void Ext2::open(BlockDevice* block_device) {
         this->block_device=block_device;
         this->inode_bitmap=new Bitmap(sb->inode_bitmap_blocks, 1, block_device);
         u32 inode_blocks = sb->inode_bitmap_blocks+sb->inode_area_blocks;
-        this->data_bitmap=new Bitmap(sb->inode_bitmap_blocks, 1+inode_blocks, block_device);
+        this->data_bitmap=new Bitmap(sb->data_bitmap_blocks, 1+inode_blocks, block_device);
         this->inode_area_start_block = 1;
         this->data_area_start_block = 1+inode_blocks;
         this->disk_inode_start = (DiskInode*)this->block_device->get_block_cache(1);

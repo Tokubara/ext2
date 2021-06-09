@@ -228,7 +228,7 @@ Inode Inode::create(const char *name, FileType type) {
   u32 new_inode_number = this->fs->alloc_inode();
   DiskInode *new_disk_inode = this->fs->get_disk_inode_from_id(new_inode_number);
   Inode inode{this->fs, new_disk_inode, new_inode_number};
-//  log_trace("new inode number: %u, its parent inode number: %u", new_inode_number, this->disk_inode->inode_number);
+  log_trace("new inode number: %u, its parent inode number: %u", new_inode_number, this->disk_inode->inode_number);
   if (type == FileType::DIR) {
     inode.initialize_dir(this->disk_inode->inode_number);
   } else if(type == FileType::REG) {
