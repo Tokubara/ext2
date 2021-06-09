@@ -25,8 +25,9 @@ i32 Ext2::create(BlockDevice* block_device, u32 total_blocks, u32 inode_bitmap_b
         // {{{2 初始化root, 创建相应的目录
         u32 root_inode_id = this->alloc_inode();
         assert(root_inode_id==0);
+//        assert(this->alloc_inode()==1);
 
-        this->disk_inode_start = (DiskInode*)this->block_device->get_block_cache(1);
+        this->disk_inode_start = (DiskInode*)this->block_device->get_block_cache(1+inode_bitmap_blocks);
         this->root = new Inode(this, this->disk_inode_start, root_inode_id);
         this->root->initialize_dir(root_inode_id);
         return 0;
@@ -44,7 +45,7 @@ void Ext2::open(BlockDevice* block_device) {
         this->data_bitmap=new Bitmap(sb->data_bitmap_blocks, 1+inode_blocks, block_device);
         this->inode_area_start_block = 1;
         this->data_area_start_block = 1+inode_blocks;
-        this->disk_inode_start = (DiskInode*)this->block_device->get_block_cache(1);
+        this->disk_inode_start = (DiskInode*)this->block_device->get_block_cache(1+sb->inode_bitmap_blocks);
         this->root = new Inode(this, this->disk_inode_start, 0);
         log_trace("inode_bitmap_blocks:%u, inode_blocks:%u, data_bitmap_blocks:%u", sb->inode_bitmap_blocks, inode_blocks, sb->data_bitmap_blocks);
 //        return Ext2(block_device, )

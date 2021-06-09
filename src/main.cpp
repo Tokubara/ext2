@@ -40,11 +40,11 @@ int main() {
 //  assert(Inode::get_block_num_by_size(13825)==29); // 13824=27*512
 //  assert(Inode::get_block_num_by_size(79360)==27+128+1); // 79360=(27+128)*512
 //  assert(Inode::get_block_num_by_size(79361)==27+128+1+ 1+1+1);
-  Ext2 ext2;
-  ext2.create(&block_device, block_device.block_num);
-//  ext2.root->ls();
   Ext2 ext2_;
-  ext2_.open(&block_device);
+  ext2_.create(&block_device, block_device.block_num);
+//  ext2.root->ls();
+//  Ext2 ext2;
+//  ext2.open(&block_device);
 //  ext2_.root->ls();
   Inode file0 = ext2_.root->create("file0", FileType::DIR);
   auto file0_content = "I hate you";
