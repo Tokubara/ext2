@@ -41,10 +41,19 @@ int main() {
 //  assert(Inode::get_block_num_by_size(79361)==27+128+1+ 1+1+1);
   Ext2 ext2;
   ext2.create(&block_device, block_device.block_num);
-  ext2.root->ls();
+//  ext2.root->ls();
   Ext2 ext2_;
   ext2_.open(&block_device);
-  ext2_.root->ls();
+//  ext2_.root->ls();
+  Inode file0 = ext2_.root->create("file0", FileType::DIR);
+  auto file0_content = "I hate you";
+  file0.write_at(0, strlen(file0_content),(u8*)file0_content);
+  u8 buf[100];
+  file0.read_at(1,10,buf);
+  for(u32 i = 0; i<10; i++) {
+    putchar(buf[i]);
+  }
+//  ext2_.root->ls();
 //  log_trace("%u",ext2.data_area_start_block);
 //  log_trace("%u",ext2_.data_area_start_block);
   return 0;

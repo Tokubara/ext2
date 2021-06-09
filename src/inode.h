@@ -14,10 +14,12 @@ struct DiskInode { // disk上也有的
     u32 indirect1;
     u32 indirect2;
     u32 nlinks;
+    u32 inode_number;
     FileType file_type;
     u32 direct[INODE_DIRECT_NUM]; // 其它有5个字段
 //        u32 inode_number;
     void initialize(FileType type);
+
 };
 
 struct DirEntry {
@@ -26,7 +28,7 @@ struct DirEntry {
 };
 
 struct Inode {
-    Inode(Ext2* ext2, DiskInode* disk_inode);
+    Inode(Ext2* ext2, DiskInode* disk_inode, u32 inode_number);
     u32 find(std::string path);
     i32 increase_size(u32 need);
     void ls() const;
@@ -41,11 +43,15 @@ struct Inode {
  * 初始化目录
  * @return
  */
-    i32 initialize_dir(u32 self_inode_number);
+    i32 initialize_dir(u32 parent_inode_number);
 public:
     DiskInode* disk_inode;
     Ext2* fs;
 
     u32 logic_to_phy_block_id(u32 logic_id) const;
+
+    Inode create(const char *string, FileType type);
+
+    void initialize_regfile() const;
 };
 #endif //EXT2_INODE_H

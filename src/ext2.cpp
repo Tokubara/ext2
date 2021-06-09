@@ -26,7 +26,7 @@ i32 Ext2::create(BlockDevice* block_device, u32 total_blocks, u32 inode_bitmap_b
         assert(root_inode_id==0);
 
         this->disk_inode_start = (DiskInode*)this->block_device->get_block_cache(1);
-        this->root = new Inode(this, this->disk_inode_start);
+        this->root = new Inode(this, this->disk_inode_start, root_inode_id);
         this->root->initialize_dir(root_inode_id);
         return 0;
 }
@@ -44,7 +44,7 @@ void Ext2::open(BlockDevice* block_device) {
         this->inode_area_start_block = 1;
         this->data_area_start_block = 1+inode_blocks;
         this->disk_inode_start = (DiskInode*)this->block_device->get_block_cache(1);
-        this->root = new Inode(this, this->disk_inode_start);
+        this->root = new Inode(this, this->disk_inode_start, 0);
 //        return Ext2(block_device, )
 }
 
