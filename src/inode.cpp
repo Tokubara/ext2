@@ -278,10 +278,11 @@ Inode Inode::invalid_inode() {
 }
 
 bool Inode::is_self_valid() const {
-  if(this->disk_inode->inode_number!=0xffffffff) {
-    assert(this->fs!= nullptr && this->disk_inode!= nullptr);
+  if(this->fs != nullptr) {
+    assert(this->disk_inode!= nullptr && this->disk_inode->inode_number != 0xffffffff);
     return true;
   } else {
+    assert(this->disk_inode== nullptr);
     return false;
   }
 }
