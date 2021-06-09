@@ -66,6 +66,8 @@ u32 Ext2::alloc_inode() const {
 
 
 
+
+
 /**
  * 需要维护ret
  *
@@ -107,4 +109,15 @@ std::queue<std::string> Ext2::split_path(const char *path) {
                 path_tokens_str.push(path_str);
         }
         return path_tokens_str;
+}
+
+u32 Ext2::dealloc_inode(u32 inode_number) const {
+        assert(inode_number!=0); // 根目录节点必须有
+        this->inode_bitmap->dealloc(inode_number);
+        return 0;
+}
+
+u32 Ext2::dealloc_data(u32 data_block_id) const {
+        this->inode_bitmap->dealloc(data_block_id-this->data_area_start_block);
+        return 0;
 }

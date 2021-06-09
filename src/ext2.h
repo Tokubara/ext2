@@ -35,6 +35,8 @@ struct Ext2 {
     void open(BlockDevice*);
     u32 alloc_data() const;
     u32 alloc_inode() const;
+    u32 dealloc_data(u32 data_block_id) const;
+    u32 dealloc_inode(u32 inode_number) const;
 
     Inode find_inode_by_full_path(const char *path) const;
 

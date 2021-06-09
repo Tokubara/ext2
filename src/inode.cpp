@@ -8,9 +8,9 @@
 #include <cerrno>
 
 Inode::Inode(Ext2 *ext2, DiskInode *disk_inode, u32 inode_number) : disk_inode(disk_inode), fs(ext2) {
-  if(ext2== nullptr) {assert(disk_inode== nullptr&&inode_number==0xffffffff);}
-  if(disk_inode== nullptr) {assert(ext2== nullptr&&inode_number==0xffffffff);}
-  if(disk_inode!= nullptr) this->disk_inode->inode_number = inode_number;
+  if (ext2 == nullptr) { assert(disk_inode == nullptr && inode_number == 0xffffffff); }
+  if (disk_inode == nullptr) { assert(ext2 == nullptr && inode_number == 0xffffffff); }
+  if (disk_inode != nullptr) this->disk_inode->inode_number = inode_number;
 }
 
 /** 此函数在文件长度可能增大的时候调用, 如果new_size<当前size, 啥也不做就返回了
@@ -18,8 +18,6 @@ Inode::Inode(Ext2 *ext2, DiskInode *disk_inode, u32 inode_number) : disk_inode(d
  * */
 i32 Inode::increase_size(u32 new_size) {
   // log_trace("enter, new_size: %u, cur_size: %u", new_size, this->disk_inode->size);
-  // TODO
-//  assert(sizeof this->disk_inode==128);
   if (new_size <= this->disk_inode->size) return 0;
   // {{{2 虽然大小增大, 但是需要的块数并没有增多
   u32 need = get_block_num_by_size(new_size) - get_block_num_by_size(disk_inode->size);
@@ -218,7 +216,7 @@ std::queue<std::string> Inode::ls() const {
   auto *dir_entries = new DirEntry[dir_num];
   this->read_at(0, this->disk_inode->size, (u8 *) dir_entries);
   for (u32 i = 0; i < dir_num; i++) {
-    if(Inode::is_valid(dir_entries[i].inode_number)) {
+    if (Inode::is_valid(dir_entries[i].inode_number)) {
       entries_str.push(dir_entries->name);
     }
 //    printf("%s\n", dir_entries[i].name);
@@ -227,11 +225,11 @@ std::queue<std::string> Inode::ls() const {
 }
 
 Inode Inode::create(const char *name, FileType type) {
-  assert(strlen(name)<=NAME_LENGTH_LIMIT);
+  assert(strlen(name) <= NAME_LENGTH_LIMIT);
   assert(name != nullptr);
   // {{{2 判断是否有同名的
   Inode tmp_inode = this->find(name, nullptr);
-  if(tmp_inode.is_self_valid()) {
+  if (tmp_inode.is_self_valid()) {
     log_error("create fail: %s has exists", name);
     return Inode::invalid_inode();
   }
@@ -240,18 +238,18 @@ Inode Inode::create(const char *name, FileType type) {
 //  assert(this->fs->alloc_inode()==new_inode_number+1);
   DiskInode *new_disk_inode = this->fs->get_disk_inode_from_id(new_inode_number);
   Inode inode{this->fs, new_disk_inode, new_inode_number};
-//  log_trace("new inode number: %u, its parent inode number: %u", new_inode_number, this->disk_inode->inode_number);
+  log_trace("new inode number: %u, its parent inode number: %u", new_inode_number, this->disk_inode->inode_number);
   if (type == FileType::DIR) {
     inode.initialize_dir(this->disk_inode->inode_number);
-  } else if(type == FileType::REG) {
+  } else if (type == FileType::REG) {
     inode.initialize_regfile();
   } else {
     TODO();
   }
   DirEntry dir_entry;
-  strcpy(dir_entry.name,name);
-  dir_entry.inode_number=new_inode_number;
-  this->write_at(this->disk_inode->size, sizeof(DirEntry), (u8*)&dir_entry);
+  strcpy(dir_entry.name, name);
+  dir_entry.inode_number = new_inode_number;
+  this->write_at(this->disk_inode->size, sizeof(DirEntry), (u8 *) &dir_entry);
   return inode;
 }
 
@@ -262,23 +260,24 @@ void Inode::initialize_regfile() const {
 // 与ls的实现差不多
 /** 如果需要它在目录中的位置, entry_index指针不为空, 否则为空, 不过此字段只有在Inode有效的情况下才有意义(注意它是u32)
  * */
-Inode Inode::find(const std::string& name, u32* entry_index) const {
+Inode Inode::find(const std::string &name, u32 *entry_index) const {
   assert(this->disk_inode->file_type == FileType::DIR);
 //  log_debug("name:%s",name.c_str());
   u32 dir_num = this->disk_inode->size / sizeof(DirEntry);
   auto *dir_entries = new DirEntry[dir_num];
   this->read_at(0, this->disk_inode->size, (u8 *) dir_entries);
   for (u32 i = 0; i < dir_num; i++) {
-    if(dir_entries[i].name==name && is_valid(dir_entries[i].inode_number)) {
-      if(entry_index!= nullptr) *entry_index = i;
-      return Inode{this->fs,this->fs->get_disk_inode_from_id(dir_entries[i].inode_number),dir_entries[i].inode_number};
+    if (dir_entries[i].name == name && is_valid(dir_entries[i].inode_number)) {
+      if (entry_index != nullptr) *entry_index = i;
+      return Inode{this->fs, this->fs->get_disk_inode_from_id(dir_entries[i].inode_number),
+                   dir_entries[i].inode_number};
     }
   }
   return Inode::invalid_inode();
 }
 
 bool Inode::is_valid(u32 number) {
-  return number!=0xfffffff;
+  return number != 0xfffffff;
 }
 
 Inode Inode::invalid_inode() {
@@ -286,35 +285,102 @@ Inode Inode::invalid_inode() {
 }
 
 bool Inode::is_self_valid() const {
-  if(this->fs != nullptr) {
-    assert(this->disk_inode!= nullptr && this->disk_inode->inode_number != 0xffffffff);
+  if (this->fs != nullptr) {
+    assert(this->disk_inode != nullptr && this->disk_inode->inode_number != 0xffffffff);
     return true;
   } else {
-    assert(this->disk_inode== nullptr);
+    assert(this->disk_inode == nullptr);
     return false;
   }
 }
 
 bool Inode::is_dir() const {
-  return this->disk_inode->file_type==FileType::DIR;
+  return this->disk_inode->file_type == FileType::DIR;
 }
 
 i32 Inode::rm(const char *name) {
   assert(this->is_dir());
-  Inode inode = this->find(name, nullptr);
-  if(!inode.is_self_valid()) {
+  u32 entry_index;
+  Inode inode = this->find(name, &entry_index);
+  if (!inode.is_self_valid()) {
     log_error("%s not exists", name);
     return -ENOENT;
   }
-  if(inode.is_dir()) { // 非空目录不能删除
+  if (inode.is_dir()) { // 非空目录不能删除
     auto ret = inode.ls().size();
-    assert(ret>=2);
-    if(ret>2) {
+    assert(ret >= 2);
+    if (ret > 2) {
       log_error("%s is not empty", name);
       return -ENOTEMPTY;
     }
   }
   // 可以删除的情况
-
+  // {{{2 清除在父目录中的项, 置为0xffffffff
+  DirEntry tmp_entry{};
+  strcpy(tmp_entry.name, name);
+  tmp_entry.inode_number = 0xffffffff;
+  this->write_at(entry_index * sizeof(DirEntry), sizeof(DirEntry), (u8 *) &tmp_entry);
+  inode.disk_inode->nlinks -= 1;
+  // {{{2 是否clear
+  if (inode.is_dir() || (inode.is_reg() && inode.disk_inode->nlinks == 0)) { // 之前已经减了
+    inode.clear(); // 回收这些数据块
+    this->fs->dealloc_inode(inode.disk_inode->inode_number); // 回收inode号
+  }
   return 0;
+}
+
+bool Inode::is_reg() const {
+  return this->disk_inode->file_type == FileType::REG;
+}
+
+/**
+ * 没有清空要回收的数据块, 也没有把indirect这些置为0, 不过改了size, 这只是与increase_size, 感觉不改也行
+ * */
+void Inode::clear() {
+  // 清除此inode的数据块
+  std::queue<u32> clear_inodes_id;
+  u32 cur_block_num = this->get_block_num_by_size(this->disk_inode->size); // 会不断变化
+  u32 old_block_num = cur_block_num;
+  u32 data_block_num = ceiling(this->disk_inode->size, BLOCK_SIZE);
+  this->disk_inode->size = 0;
+  u32 tmp = std::min(cur_block_num, INODE_DIRECT_NUM); // 一开始是存min, 但也可能改成别的
+  for (u32 i = 0; i < tmp; i++) {
+    clear_inodes_id.push(this->disk_inode->direct[i]);
+  }
+  cur_block_num -= tmp;
+  if (cur_block_num > 0) {
+    // 处理一级块部分
+    u32 *indirect1_array = (u32 *) fs->block_device->get_block_cache(this->disk_inode->indirect1);
+    clear_inodes_id.push(this->disk_inode->indirect1); // 回收一级块
+    cur_block_num--;
+    tmp = std::min(INDEX_NO_PER_BLOCK, cur_block_num);
+    assert(cur_block_num > 0);
+    for (u32 i = 0; i < tmp; i++) {
+      clear_inodes_id.push(indirect1_array[i]);
+    }
+    cur_block_num -= tmp;
+    if (cur_block_num > 0) { // 用到了二级块
+      u32 *indirect2_array = (u32 *) fs->block_device->get_block_cache(this->disk_inode->indirect2);
+      data_block_num -= (INDEX_NO_PER_BLOCK + INODE_DIRECT_NUM);
+      u32 indirect1_num = ceiling(data_block_num, INDEX_NO_PER_BLOCK);
+      for (u32 i = 0; i < indirect1_num; i++) { // 写满的内容
+        u32 *cur_indirect1 = (u32 *) fs->block_device->get_block_cache(indirect2_array[i]);
+        tmp = (i == indirect1_num - 1) ? data_block_num % INDEX_NO_PER_BLOCK : INDEX_NO_PER_BLOCK;
+        for (u32 j = 0; j < tmp; j++) {
+          clear_inodes_id.push(cur_indirect1[j]);
+        }
+        cur_block_num -= tmp;
+        clear_inodes_id.push(indirect2_array[i]);
+        cur_block_num--; // 减去一级块
+      }
+      clear_inodes_id.push(this->disk_inode->indirect2);
+      cur_block_num--; // 现在是一级索引块以及放于一级索引块的数据块
+    }
+  }
+  assert(cur_block_num == 0);
+  assert(old_block_num == clear_inodes_id.size());
+  while (!clear_inodes_id.empty()) {
+    this->fs->dealloc_data(clear_inodes_id.front());
+    clear_inodes_id.pop();
+  }
 }

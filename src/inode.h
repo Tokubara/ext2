@@ -61,5 +61,8 @@ public:
 
     static bool is_valid(u32 number) ;
 
+    bool is_reg() const;
+
+    void clear();
 };
 #endif //EXT2_INODE_H
