@@ -6,7 +6,7 @@
 #define EXT2_COMMON_H
 
 #include "mylib.h"
-#include <vector>
+//#include <vector>
 
 const u32 BLOCK_SIZE = 512;
 const u32 EFS_MAGIC = 0x3b800001;

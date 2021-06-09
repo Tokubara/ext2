@@ -3,7 +3,12 @@
 # 需要根据实际情况修改的用Makefile标注
 
 OBJ_DIR=obj/
-SRCS = $(wildcard src/*.cpp)
+SRCS := $(wildcard src/*.cpp)
+
+# fuse涉及的文件
+FUSE_SRCS := $(wildcard src/*fuse*)
+SRCS := $(filter-out $(FUSE_SRCS), $(SRCS))
+
 OBJS = $(SRCS:src/%.cpp=$(OBJ_DIR)/%.o)
 BUILD_DIR ?= build/
 # TODO
