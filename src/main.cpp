@@ -83,6 +83,6 @@ int main() {
   assert(ext2_.root->ls().size()==2);
   tmp = ext2_.root->create("dir0", FileType::DIR);
   assert(tmp.disk_inode->inode_number==inode_number0);
-  assert(ext2_.root->ls().size()==2);
+  assert(ext2_.root->ls().size()==3);
   return 0;
 }

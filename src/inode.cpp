@@ -8,8 +8,8 @@
 #include <cerrno>
 
 Inode::Inode(Ext2 *ext2, DiskInode *disk_inode, u32 inode_number) : disk_inode(disk_inode), fs(ext2) {
-  if (ext2 == nullptr) { assert(disk_inode == nullptr && inode_number == 0xffffffff); }
-  if (disk_inode == nullptr) { assert(ext2 == nullptr && inode_number == 0xffffffff); }
+  if (ext2 == nullptr) { assert(disk_inode == nullptr && inode_number == INVALID_INODE_NO); }
+  if (disk_inode == nullptr) { assert(ext2 == nullptr && inode_number == INVALID_INODE_NO); }
   if (disk_inode != nullptr) this->disk_inode->inode_number = inode_number;
 }
 
@@ -277,16 +277,16 @@ Inode Inode::find(const std::string &name, u32 *entry_index) const {
 }
 
 bool Inode::is_valid(u32 number) {
-  return number != 0xfffffff;
+  return number != INVALID_INODE_NO;
 }
 
 Inode Inode::invalid_inode() {
-  return Inode(nullptr, nullptr, 0xffffffff);
+  return Inode(nullptr, nullptr, INVALID_INODE_NO);
 }
 
 bool Inode::is_self_valid() const {
   if (this->fs != nullptr) {
-    assert(this->disk_inode != nullptr && this->disk_inode->inode_number != 0xffffffff);
+    assert(this->disk_inode != nullptr && this->disk_inode->inode_number != INVALID_INODE_NO);
     return true;
   } else {
     assert(this->disk_inode == nullptr);
@@ -315,10 +315,10 @@ i32 Inode::rm(const char *name) {
     }
   }
   // 可以删除的情况
-  // {{{2 清除在父目录中的项, 置为0xffffffff
+  // {{{2 清除在父目录中的项, 置为INVALID_INODE_NO
   DirEntry tmp_entry{};
   strcpy(tmp_entry.name, name);
-  tmp_entry.inode_number = 0xffffffff;
+  tmp_entry.inode_number = INVALID_INODE_NO;
   this->write_at(entry_index * sizeof(DirEntry), sizeof(DirEntry), (u8 *) &tmp_entry);
   inode.disk_inode->nlinks -= 1;
   // {{{2 是否clear
