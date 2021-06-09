@@ -17,10 +17,14 @@ i32 Inode::increase_size(u32 new_size) {
   // TODO
 //  assert(sizeof this->disk_inode==128);
   if(new_size<=this->disk_inode->size) return 0;
+  this->disk_inode->size = new_size;
   // {{{2 虽然大小增大, 但是需要的块数并没有增多
   u32 need = get_block_num_by_size(new_size)-get_block_num_by_size(disk_inode->size);
   assert(need>=0);
-  if(need==0) return 0;
+  if(need==0) {
+//    goto return_part;
+    return 0;
+  }
   // {{{2 分配需要的块数
   std::queue<u32> block_id;
   assert(fs!=nullptr); // TODO fs
@@ -96,8 +100,9 @@ i32 Inode::increase_size(u32 new_size) {
       b0=0;
     }
   }
+//  return_part:
   assert(block_id.empty());
-  this->disk_inode->size = new_size;
+//  this->disk_inode->size = new_size;
   return 0;
 }
 
