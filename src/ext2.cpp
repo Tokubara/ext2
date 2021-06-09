@@ -84,7 +84,7 @@ Inode Ext2::find_inode_by_full_path(const char *path) const {
                 if(dir->disk_inode->file_type!=FileType::DIR) {
                         return Inode::invalid_inode();
                 }
-                *dir = dir->find(name);
+                *dir = dir->find(name, nullptr);
                 if(!dir->is_self_valid()) return Inode::invalid_inode();
         }
 

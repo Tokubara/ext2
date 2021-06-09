@@ -4,8 +4,8 @@
 
 #include "inode.h"
 #include "ext2.h"
-#include <queue>
 #include <cstring>
+#include <cerrno>
 
 Inode::Inode(Ext2 *ext2, DiskInode *disk_inode, u32 inode_number) : disk_inode(disk_inode), fs(ext2) {
   if(ext2== nullptr) {assert(disk_inode== nullptr&&inode_number==0xffffffff);}
@@ -211,24 +211,29 @@ i32 Inode::read_at(u32 offset, u32 len, u8 *buffer) const {
   return 0;
 }
 
-void Inode::ls() const {
+std::queue<std::string> Inode::ls() const {
   assert(this->disk_inode->file_type == FileType::DIR);
-
+  std::queue<std::string> entries_str;
   u32 dir_num = this->disk_inode->size / sizeof(DirEntry);
   auto *dir_entries = new DirEntry[dir_num];
   this->read_at(0, this->disk_inode->size, (u8 *) dir_entries);
   for (u32 i = 0; i < dir_num; i++) {
-    printf("%s\n", dir_entries[i].name);
+    if(Inode::is_valid(dir_entries[i].inode_number)) {
+      entries_str.push(dir_entries->name);
+    }
+//    printf("%s\n", dir_entries[i].name);
   }
+  return entries_str;
 }
 
 Inode Inode::create(const char *name, FileType type) {
   assert(strlen(name)<=NAME_LENGTH_LIMIT);
   assert(name != nullptr);
   // {{{2 判断是否有同名的
-  Inode tmp_inode = this->find(name);
+  Inode tmp_inode = this->find(name, nullptr);
   if(tmp_inode.is_self_valid()) {
     log_error("create fail: %s has exists", name);
+    return Inode::invalid_inode();
   }
   // {{{2 创建
   const u32 new_inode_number = this->fs->alloc_inode();
@@ -255,14 +260,17 @@ void Inode::initialize_regfile() const {
 }
 
 // 与ls的实现差不多
-Inode Inode::find(const std::string& name) const {
+/** 如果需要它在目录中的位置, entry_index指针不为空, 否则为空, 不过此字段只有在Inode有效的情况下才有意义(注意它是u32)
+ * */
+Inode Inode::find(const std::string& name, u32* entry_index) const {
   assert(this->disk_inode->file_type == FileType::DIR);
-  log_debug("name:%s",name.c_str());
+//  log_debug("name:%s",name.c_str());
   u32 dir_num = this->disk_inode->size / sizeof(DirEntry);
   auto *dir_entries = new DirEntry[dir_num];
   this->read_at(0, this->disk_inode->size, (u8 *) dir_entries);
   for (u32 i = 0; i < dir_num; i++) {
     if(dir_entries[i].name==name && is_valid(dir_entries[i].inode_number)) {
+      if(entry_index!= nullptr) *entry_index = i;
       return Inode{this->fs,this->fs->get_disk_inode_from_id(dir_entries[i].inode_number),dir_entries[i].inode_number};
     }
   }
@@ -289,4 +297,24 @@ bool Inode::is_self_valid() const {
 
 bool Inode::is_dir() const {
   return this->disk_inode->file_type==FileType::DIR;
+}
+
+i32 Inode::rm(const char *name) {
+  assert(this->is_dir());
+  Inode inode = this->find(name, nullptr);
+  if(!inode.is_self_valid()) {
+    log_error("%s not exists", name);
+    return -ENOENT;
+  }
+  if(inode.is_dir()) { // 非空目录不能删除
+    auto ret = inode.ls().size();
+    assert(ret>=2);
+    if(ret>2) {
+      log_error("%s is not empty", name);
+      return -ENOTEMPTY;
+    }
+  }
+  // 可以删除的情况
+
+  return 0;
 }

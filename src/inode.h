@@ -6,6 +6,7 @@
 #define EXT2_INODE_H
 #include "common.h"
 #include <string>
+#include <queue>
 
 struct Ext2;
 
@@ -29,9 +30,9 @@ struct DirEntry {
 
 struct Inode {
     Inode(Ext2* ext2, DiskInode* disk_inode, u32 inode_number);
-    Inode find(const std::string& name) const;
+    Inode find(const std::string& name, u32* entry_index) const;
     i32 increase_size(u32 need);
-    void ls() const;
+    std::queue<std::string> ls() const;
     i32 read_at(u32 offset, u32 len, u8* buffer) const;
 /**
  * 根据文件大小, 计算需要的索引块和数据块数的总和, 已测试
@@ -51,6 +52,7 @@ public:
     u32 logic_to_phy_block_id(u32 logic_id) const;
 
     Inode create(const char *string, FileType type);
+    i32 rm(const char *string);
     static Inode invalid_inode();
 
     void initialize_regfile() const;

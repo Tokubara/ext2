@@ -59,15 +59,16 @@ int main() {
   Inode file1 = dir0.create("file1", FileType::REG);
   auto file1_content = "I still hate you";
   file1.write_at(0, strlen(file1_content),(u8*)file1_content);
-  log_debug("strlen:%lu", strlen(file1_content));
+//  log_debug("strlen:%lu", strlen(file1_content));
   file1.read_at(0,strlen(file1_content),buf);
 //  for(u32 i = 0; i<strlen(file1_content); i++) {
 //    putchar(buf[i]);
 //  }
   Inode tmp = ext2_.find_inode_by_full_path("/dir0/file1");
   assert(tmp.disk_inode->file_type==FileType::REG);
-  tmp = ext2_.find_inode_by_full_path("file3");
-  assert(!tmp.is_self_valid());
+  assert(!dir0.create("file1",FileType::DIR).is_self_valid());
+//  tmp = ext2_.find_inode_by_full_path("file3");
+//  assert(!tmp.is_self_valid());
 //  ext2_.root->ls();
 //  log_trace("%u",ext2.data_area_start_block);
 //  log_trace("%u",ext2_.data_area_start_block);

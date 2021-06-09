@@ -38,6 +38,7 @@ struct Ext2 {
 
     Inode find_inode_by_full_path(const char *path) const;
 
+
     static std::queue<std::string> split_path(const char *path);
 };
 
