@@ -4,8 +4,13 @@
 
 #include "ext2.h"
 #include <queue>
+#include <cstring>
 
 i32 Ext2::create(BlockDevice* block_device, u32 total_blocks, u32 inode_bitmap_blocks)  {
+        // 格式化 TODO
+//        for(u32 i = 0; i < total_blocks; i++) {
+//                memset(block_device->get_block_cache(i), 0, BLOCK_SIZE);
+//        }
         // {{{2 计算块数划分, 创建超级块
         this->block_device=block_device;
         u32 inode_area_blocks = ceiling(inode_bitmap_blocks*512*8, INODE_NUM_PER_BLOCK); // bug:一开始忘了*8, 512 bytes对应的是4096个bits
