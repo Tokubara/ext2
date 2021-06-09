@@ -11,11 +11,13 @@ struct Ext2;
 
 struct DiskInode { // disk上也有的
     u32 size; // 文件的字节数大小
-    u32 direct[INODE_DIRECT_NUM];
     u32 indirect1;
     u32 indirect2;
+    u32 nlinks;
     FileType file_type;
+    u32 direct[INODE_DIRECT_NUM]; // 其它有5个字段
 //        u32 inode_number;
+    void initialize(FileType type);
 };
 
 struct DirEntry {
@@ -43,6 +45,6 @@ public:
     DiskInode* disk_inode;
     Ext2* fs;
 
-    u32 logic_to_phy_block_id(u32 logic_id);
+    u32 logic_to_phy_block_id(u32 logic_id) const;
 };
 #endif //EXT2_INODE_H

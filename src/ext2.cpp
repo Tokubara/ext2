@@ -15,6 +15,7 @@ i32 Ext2::create(BlockDevice* block_device, u32 total_blocks, u32 inode_bitmap_b
         *(SuperBlock*)block_device->get_block_cache(0)=SuperBlock(total_blocks,inode_bitmap_blocks,inode_area_blocks, data_bitmap_blocks, data_area_blocks);
         this->inode_area_start_block=1;
         this->data_area_start_block=1+inode_blocks;
+        log_debug("data_area_start_block: %u", this->data_area_start_block);
         // {{{2 创建位图
         this->inode_bitmap = new Bitmap(inode_bitmap_blocks, 1, block_device);
         this->data_bitmap = new Bitmap(data_bitmap_blocks, 1+inode_blocks, block_device);
@@ -23,12 +24,13 @@ i32 Ext2::create(BlockDevice* block_device, u32 total_blocks, u32 inode_bitmap_b
         u32 root_inode_id = this->alloc_inode();
         assert(root_inode_id==0);
 
-        this->root = new Inode(this, (DiskInode*)this->block_device->get_block_cache(1));
+        this->disk_inode_start = (DiskInode*)this->block_device->get_block_cache(1);
+        this->root = new Inode(this, this->disk_inode_start);
         this->root->initialize_dir(root_inode_id);
         return 0;
 }
-Inode* Ext2::get_disk_inode_from_id(const u32 inode_id) const {
-  return root+inode_id;
+DiskInode* Ext2::get_disk_inode_from_id(const u32 inode_id) const {
+  return this->disk_inode_start+inode_id;
 }
 
 void Ext2::open(BlockDevice* block_device) {
@@ -40,7 +42,8 @@ void Ext2::open(BlockDevice* block_device) {
         this->data_bitmap=new Bitmap(sb->inode_bitmap_blocks, 1+inode_blocks, block_device);
         this->inode_area_start_block = 1;
         this->data_area_start_block = 1+inode_blocks;
-        this->root = this->get_disk_inode_from_id(0);
+        this->disk_inode_start = (DiskInode*)this->block_device->get_block_cache(1);
+        this->root = new Inode(this, this->disk_inode_start);
 //        return Ext2(block_device, )
 }
 

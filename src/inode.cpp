@@ -13,6 +13,7 @@ Inode::Inode(Ext2* ext2, DiskInode* disk_inode):disk_inode(disk_inode), fs(ext2)
  * i32是因为可能失败, 但是目前不做处理
  * */
 i32 Inode::increase_size(u32 new_size) {
+  log_trace("enter, new_size: %u, cur_size: %u", new_size, this->disk_inode->size);
   // TODO
 //  assert(sizeof this->disk_inode==128);
   if(new_size<=this->disk_inode->size) return 0;
@@ -25,6 +26,7 @@ i32 Inode::increase_size(u32 new_size) {
   assert(fs!=nullptr); // TODO fs
   for(u32 i = 0; i < need; i++) {
     block_id.push(fs->alloc_data());
+    log_debug("alloc %u", block_id.back());
   }
 
   // 为方便, 计算数据块数
@@ -117,6 +119,7 @@ i32 Inode::write_at(const u32 offset, u32 len, const u8* buffer) {
 }
 
 i32 Inode::initialize_dir(u32 self_inode_number) {
+  this->disk_inode->initialize(FileType::DIR);
       DirEntry dir[2];
       assert(sizeof(DirEntry)==32);
       if(self_inode_number==0) {
@@ -128,7 +131,7 @@ i32 Inode::initialize_dir(u32 self_inode_number) {
         TODO();
       }
       this->write_at(0,sizeof(DirEntry)*2, (u8*)dir);
-      this->disk_inode->file_type=FileType::DIR;
+
       log_trace("first data block id:%u",this->disk_inode->direct[0]);
   return 0;
 }
@@ -152,7 +155,7 @@ u32 Inode::get_block_num_by_size(const u32 size)  {
   return total;
 }
 
-u32 Inode::logic_to_phy_block_id(u32 logic_id) {
+u32 Inode::logic_to_phy_block_id(u32 logic_id) const {
   u32 phy_id = 0;
   assert(logic_id<FILE_MAX_BLOCK_NUM);
   if(logic_id<INODE_DIRECT_NUM) {
@@ -170,4 +173,15 @@ u32 Inode::logic_to_phy_block_id(u32 logic_id) {
     phy_id = indirect1_array[tmp%INDEX_NO_PER_BLOCK];
   }
   return phy_id;
+}
+
+void DiskInode::initialize(FileType type) {
+  assert(sizeof(DiskInode) == 128);
+  this->nlinks=1;
+  if(type == FileType::DIR) this->nlinks++;
+  this->size=0;
+  memset(this->direct,0, sizeof(DiskInode)*INODE_DIRECT_NUM);
+  this->indirect1=0;
+  this->indirect2=0;
+  this->file_type = type;
 }

@@ -22,8 +22,9 @@ struct SuperBlock {
 
 struct Ext2 {
     i32 create(BlockDevice* block_device, u32 total_blocks, u32 inode_bitmap_blocks = INODE_BITMAP_BLOCKS);
-    Inode* get_disk_inode_from_id(const u32 inode_id) const;
+    DiskInode* get_disk_inode_from_id(const u32 inode_id) const;
     Inode* root; // 好像不能有
+    DiskInode* disk_inode_start;
     BlockDevice* block_device; // 这里存引用真的靠谱么
     Bitmap* inode_bitmap;
     Bitmap* data_bitmap;
