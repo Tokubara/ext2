@@ -18,8 +18,9 @@ i32 Ext2::create(BlockDevice* block_device, u32 total_blocks, u32 inode_bitmap_b
 //        log_debug("data_area_start_block: %u", this->data_area_start_block);
         // {{{2 创建位图
         this->inode_bitmap = new Bitmap(inode_bitmap_blocks, 1, block_device);
+        this->inode_bitmap->initialize();
         this->data_bitmap = new Bitmap(data_bitmap_blocks, 1+inode_blocks, block_device);
-
+        this->inode_bitmap->initialize();
         // {{{2 初始化root, 创建相应的目录
         u32 root_inode_id = this->alloc_inode();
         assert(root_inode_id==0);

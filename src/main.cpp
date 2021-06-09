@@ -41,6 +41,7 @@ int main() {
 //  assert(Inode::get_block_num_by_size(79361)==27+128+1+ 1+1+1);
   Ext2 ext2;
   ext2.create(&block_device, block_device.block_num);
+  ext2.root->ls();
   Ext2 ext2_;
   ext2_.open(&block_device);
   ext2_.root->ls();

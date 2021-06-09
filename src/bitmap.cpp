@@ -27,5 +27,10 @@ void Bitmap::dealloc(u32 bit_id) {
 
 Bitmap::Bitmap(u32 blocks, u32 start_block_id, BlockDevice* block_device):block_num(blocks), start_block_id(start_block_id), block_device(block_device) {
   bitmap_block = block_device->get_block_cache(start_block_id);
+}
+
+/** 清空
+ * */
+void Bitmap::initialize() {
   memset(bitmap_block,0,block_num*BLOCK_SIZE);
 }

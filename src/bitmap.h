@@ -15,6 +15,7 @@ struct Bitmap {
     u32 alloc() const;
     void dealloc(u32 bit_id);
     Bitmap(u32 blocks, u32 start_block_id, BlockDevice* block_device);
+    void initialize();
 };
 
 #endif //EXT2_BITMAP_H
