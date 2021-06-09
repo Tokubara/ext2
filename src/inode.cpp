@@ -8,8 +8,8 @@
 #include <cstring>
 
 Inode::Inode(Ext2 *ext2, DiskInode *disk_inode, u32 inode_number) : disk_inode(disk_inode), fs(ext2) {
-  if(ext2== nullptr) {assert(disk_inode== nullptr&&inode_number==0);}
-  if(disk_inode== nullptr) {assert(ext2== nullptr&&inode_number==0);}
+  if(ext2== nullptr) {assert(disk_inode== nullptr&&inode_number==0xffffffff);}
+  if(disk_inode== nullptr) {assert(ext2== nullptr&&inode_number==0xffffffff);}
   if(disk_inode!= nullptr) this->disk_inode->inode_number = inode_number;
 }
 
