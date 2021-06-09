@@ -56,7 +56,7 @@ int main() {
   }
   Inode dir0 = ext2_.root->create("dir0", FileType::DIR);
   dir0.ls();
-  Inode file1 = dir0.create("file1", FileType::DIR);
+  Inode file1 = dir0.create("file1", FileType::REG);
   auto file1_content = "I still hate you";
   file1.write_at(0, strlen(file1_content),(u8*)file1_content);
   file1.read_at(0,10,buf);

@@ -260,7 +260,7 @@ Inode Inode::find(const std::string& name, i32 *ret) const {
   for (u32 i = 0; i < dir_num; i++) {
     if(dir_entries[i].name==name && is_valid(dir_entries[i].inode_number)) {
       *ret = 0;
-      return Inode{this->fs,this->fs->get_disk_inode_from_id(dir_entries[i].inode_number),dir_entries->inode_number};
+      return Inode{this->fs,this->fs->get_disk_inode_from_id(dir_entries[i].inode_number),dir_entries[i].inode_number};
     }
   }
   return Inode(nullptr, nullptr, 0);
