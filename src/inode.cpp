@@ -24,7 +24,7 @@ i32 Inode::increase_size(u32 new_size) {
   std::queue<u32> block_id;
   assert(fs!=nullptr); // TODO fs
   for(u32 i = 0; i < need; i++) {
-    block_id.push(fs->data_bitmap->alloc());
+    block_id.push(fs->alloc_data());
   }
 
   // 为方便, 计算数据块数

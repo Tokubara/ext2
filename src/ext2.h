@@ -30,6 +30,8 @@ struct Ext2 {
     u32 inode_area_start_block;
     u32 data_area_start_block;
     void open(BlockDevice*);
+    u32 alloc_data();
+    u32 alloc_inode();
 };
 
 #endif //EXT2_EXT2_H
