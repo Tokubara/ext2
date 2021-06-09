@@ -225,6 +225,12 @@ void Inode::ls() const {
 Inode Inode::create(const char *name, FileType type) {
   assert(strlen(name)<=NAME_LENGTH_LIMIT);
   assert(name != nullptr);
+  // {{{2 判断是否有同名的
+  Inode tmp_inode = this->find(name);
+  if(tmp_inode.is_self_valid()) {
+    log_error("create fail: %s has exists", name);
+  }
+  // {{{2 创建
   const u32 new_inode_number = this->fs->alloc_inode();
 //  assert(this->fs->alloc_inode()==new_inode_number+1);
   DiskInode *new_disk_inode = this->fs->get_disk_inode_from_id(new_inode_number);
@@ -249,23 +255,37 @@ void Inode::initialize_regfile() const {
 }
 
 // 与ls的实现差不多
-Inode Inode::find(const std::string& name, i32 *ret) const {
-  *ret = -1;
+Inode Inode::find(const std::string& name) const {
   assert(this->disk_inode->file_type == FileType::DIR);
   log_debug("name:%s",name.c_str());
   u32 dir_num = this->disk_inode->size / sizeof(DirEntry);
   auto *dir_entries = new DirEntry[dir_num];
   this->read_at(0, this->disk_inode->size, (u8 *) dir_entries);
-
   for (u32 i = 0; i < dir_num; i++) {
     if(dir_entries[i].name==name && is_valid(dir_entries[i].inode_number)) {
-      *ret = 0;
       return Inode{this->fs,this->fs->get_disk_inode_from_id(dir_entries[i].inode_number),dir_entries[i].inode_number};
     }
   }
-  return Inode(nullptr, nullptr, 0);
+  return Inode::invalid_inode();
 }
 
 bool Inode::is_valid(u32 number) {
   return number!=0xfffffff;
+}
+
+Inode Inode::invalid_inode() {
+  return Inode(nullptr, nullptr, 0xffffffff);
+}
+
+bool Inode::is_self_valid() const {
+  if(this->disk_inode->inode_number!=0xffffffff) {
+    assert(this->fs!= nullptr && this->disk_inode!= nullptr);
+    return true;
+  } else {
+    return false;
+  }
+}
+
+bool Inode::is_dir() const {
+  return this->disk_inode->file_type==FileType::DIR;
 }

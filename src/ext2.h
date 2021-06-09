@@ -36,7 +36,7 @@ struct Ext2 {
     u32 alloc_data() const;
     u32 alloc_inode() const;
 
-    Inode find_inode_by_full_path(const char *path,  i32* ret) const;
+    Inode find_inode_by_full_path(const char *path) const;
 
     static std::queue<std::string> split_path(const char *path);
 };

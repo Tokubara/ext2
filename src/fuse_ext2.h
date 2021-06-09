@@ -4,6 +4,7 @@
 
 #ifndef EXT2_FUSE_EXT2_H
 #define EXT2_FUSE_EXT2_H
+
 #include "fuse.h"
 
 

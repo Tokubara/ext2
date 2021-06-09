@@ -7,7 +7,7 @@
 #include "ext2.h"
 
 int main() {
-  i32 ret;
+//  i32 ret;
   BlockDevice block_device{"diskfile"};
 //  Bitmap bitmap{3,1,&block_device};
 //  u32 ret;
@@ -64,10 +64,10 @@ int main() {
 //  for(u32 i = 0; i<strlen(file1_content); i++) {
 //    putchar(buf[i]);
 //  }
-  Inode tmp = ext2_.find_inode_by_full_path("/dir0/file1", &ret);
+  Inode tmp = ext2_.find_inode_by_full_path("/dir0/file1");
   assert(tmp.disk_inode->file_type==FileType::REG);
-  tmp = ext2_.find_inode_by_full_path("file3", &ret);
-  assert(ret==-1);
+  tmp = ext2_.find_inode_by_full_path("file3");
+  assert(!tmp.is_self_valid());
 //  ext2_.root->ls();
 //  log_trace("%u",ext2.data_area_start_block);
 //  log_trace("%u",ext2_.data_area_start_block);

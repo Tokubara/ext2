@@ -29,7 +29,7 @@ struct DirEntry {
 
 struct Inode {
     Inode(Ext2* ext2, DiskInode* disk_inode, u32 inode_number);
-    Inode find(const std::string& name, i32* ret) const;
+    Inode find(const std::string& name) const;
     i32 increase_size(u32 need);
     void ls() const;
     i32 read_at(u32 offset, u32 len, u8* buffer) const;
@@ -51,9 +51,13 @@ public:
     u32 logic_to_phy_block_id(u32 logic_id) const;
 
     Inode create(const char *string, FileType type);
+    static Inode invalid_inode();
 
     void initialize_regfile() const;
+    bool is_self_valid() const;
+    bool is_dir() const;
 
     static bool is_valid(u32 number) ;
+
 };
 #endif //EXT2_INODE_H

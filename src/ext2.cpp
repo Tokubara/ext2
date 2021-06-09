@@ -70,11 +70,10 @@ u32 Ext2::alloc_inode() const {
  * 需要维护ret
  *
  * */
-Inode Ext2::find_inode_by_full_path(const char *path,  i32* ret) const {
-        *ret=-1;
+Inode Ext2::find_inode_by_full_path(const char *path) const {
         if(path[0]!='/') {
                 log_error("invalid path");
-                return Inode{nullptr, nullptr,0};
+                return Inode::invalid_inode();
         }
         std::queue<std::string> path_tokens_str = split_path(path);
         std::string name;
@@ -83,12 +82,11 @@ Inode Ext2::find_inode_by_full_path(const char *path,  i32* ret) const {
                 name = path_tokens_str.front();
                 path_tokens_str.pop();
                 if(dir->disk_inode->file_type!=FileType::DIR) {
-                        return Inode{nullptr, nullptr,0};
+                        return Inode::invalid_inode();
                 }
-                *dir = dir->find(name, ret);
-                if(*ret<0) return Inode{nullptr, nullptr,0};
+                *dir = dir->find(name);
+                if(!dir->is_self_valid()) return Inode::invalid_inode();
         }
-        *ret=0;
 
         return *dir;
 }
