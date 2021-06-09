@@ -46,6 +46,7 @@ void Ext2::open(BlockDevice* block_device) {
         this->data_area_start_block = 1+inode_blocks;
         this->disk_inode_start = (DiskInode*)this->block_device->get_block_cache(1);
         this->root = new Inode(this, this->disk_inode_start, 0);
+        log_trace("inode_bitmap_blocks:%u, inode_blocks:%u, data_bitmap_blocks:%u", sb->inode_bitmap_blocks, inode_blocks, sb->data_bitmap_blocks);
 //        return Ext2(block_device, )
 }
 
