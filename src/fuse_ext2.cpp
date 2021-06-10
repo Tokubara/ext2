@@ -13,8 +13,18 @@
 
 Ext2* ext2;
 
+Inode get_parent_inode_and_basename(const char* path, const char** basename) {
+  char* path_copy = (char*)malloc(sizeof(path)+1);
+  strcpy(path_copy,path);
+  *basename = strrchr(path,'/'); // 现在指向的还有/
+  path_copy[*basename-path]='\0';
+  (*basename)+=1; // 之前指向的是/, 现在指向下一个
+  Inode parent_inode = ext2->find_inode_by_full_path(path_copy);
+  free(path_copy);
+  return parent_inode;
+}
+
 int ext2_get_attr(const char *path, struct stat *statbuf) {
-  log_enter;
 memset(statbuf, 0, sizeof(struct stat));
 
 Inode inode = ext2->find_inode_by_full_path(path);
@@ -45,19 +55,13 @@ int nxfs_mkdir(const char *path, mode_t mode)
 {
   log_trace("path: %s", path);
   (void)mode;
-  // 先找到父目录
-  char* path_copy = (char*)malloc(sizeof(path)+1);
-  strcpy(path_copy,path);
-  auto basename = strrchr(path,'/'); // 现在指向的还有/
-  path_copy[basename-path]='\0';
-  Inode parent_inode = ext2->find_inode_by_full_path(path_copy);
-  free(path_copy);
+  const char* basename;
+  Inode parent_inode = get_parent_inode_and_basename(path, &basename);
   if(!parent_inode.is_self_valid() || !parent_inode.is_dir()) {
     log_error("cannot find parent directory");
     return -ENOENT;
   }
 
-  basename++; // 之前指向的是/, 现在指向下一个
   Inode new_inode = parent_inode.create(basename, FileType::DIR);
   if(!new_inode.is_self_valid()) {
     return -EEXIST;
@@ -93,13 +97,8 @@ int nxfs_rmdir(const char *path)
 {
   // 除最后一行以外, 都与mkdir相同
   log_trace("path: %s", path);
-  char* path_copy = (char*)malloc(sizeof(path)+1);
-  strcpy(path_copy,path);
-  auto basename = strrchr(path,'/'); // 现在指向的还有/
-  path_copy[basename-path]='\0';
-  basename++; // 之前指向的是/, 现在指向下一个
-  Inode parent_inode = ext2->find_inode_by_full_path(path_copy);
-  free(path_copy);
+  const char* basename;
+  Inode parent_inode = get_parent_inode_and_basename(path, &basename);
   if(!parent_inode.is_self_valid() || !parent_inode.is_dir()) {
     log_error("cannot find parent directory");
     return -ENOENT;
@@ -150,17 +149,12 @@ static int turbo_write(const char *path, const char *buf, size_t size,off_t offs
 
 static int turbo_create(const char *path, mode_t mode,struct fuse_file_info *fi) {
   log_trace("path: %s", path);
-  char* path_copy = (char*)malloc(sizeof(path)+1);
-  strcpy(path_copy,path);
-  auto basename = strrchr(path,'/'); // 现在指向的还有/
-  path_copy[basename-path]='\0';
-  Inode parent_inode = ext2->find_inode_by_full_path(path_copy);
-  free(path_copy);
+  const char* basename;
+  Inode parent_inode = get_parent_inode_and_basename(path, &basename);
 //  assert(parent_inode.is_self_valid()); // valid
   if(!parent_inode.is_self_valid()) {
     return -ENOENT;
   }
-  basename++; // 之前指向的是/, 现在指向下一个
   Inode new_inode =  parent_inode.create(basename, FileType::REG); // 创建的一定是文件, 不是目录, 因为目录应该是mkdir
   if(!new_inode.is_self_valid()) {
     return -EEXIST;
@@ -174,13 +168,8 @@ static int turbo_create(const char *path, mode_t mode,struct fuse_file_info *fi)
 
 int nxfs_unlink(const char *path) { // 这里的实现是把rmdir的实现拷贝过来的
   log_trace("path: %s", path);
-  char* path_copy = (char*)malloc(sizeof(path)+1);
-  strcpy(path_copy,path);
-  auto basename = strrchr(path,'/'); // 现在指向的还有/
-  path_copy[basename-path]='\0';
-  basename++; // 之前指向的是/, 现在指向下一个
-  Inode parent_inode = ext2->find_inode_by_full_path(path_copy);
-  free(path_copy);
+  const char* basename;
+  Inode parent_inode = get_parent_inode_and_basename(path, &basename);
   if(!parent_inode.is_self_valid() || !parent_inode.is_dir()) {
     log_error("cannot find parent directory");
     return -ENOENT;
@@ -207,13 +196,8 @@ int nxfs_link (const char *old_path, const char *new_path) {
   if(inode.is_dir()) { // 是目录
     return -EPERM;
   }
-  char* path_copy = (char*)malloc(sizeof(new_path)+1);
-  strcpy(path_copy,new_path);
-  auto basename = strrchr(new_path,'/'); // 现在指向的还有/
-  path_copy[basename-new_path]='\0';
-  basename++; // 之前指向的是/, 现在指向下一个
-  Inode parent_inode = ext2->find_inode_by_full_path(path_copy);
-  free(path_copy);
+  const char* basename;
+  Inode parent_inode = get_parent_inode_and_basename(new_path, &basename);
   if(!parent_inode.is_self_valid()) {
     return -ENOENT;
   } else if(!parent_inode.is_dir()) {

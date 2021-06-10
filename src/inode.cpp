@@ -313,6 +313,7 @@ i32 Inode::unlink(const char *name) {
   // 可以删除的情况
   // {{{2 清除在父目录中的项, 置为INVALID_INODE_NO
   this->_write_dirent(name, INVALID_INODE_NO, entry_index);
+
   inode.disk_inode->nlinks -= 1;
   // {{{2 是否clear
   if (inode.is_dir() || (inode.is_reg() && inode.disk_inode->nlinks == 0)) { // 之前已经减了
