@@ -7,7 +7,7 @@
 #include <cstring>
 #include <cerrno>
 
-Inode::Inode(Ext2 *ext2, DiskInode *disk_inode, u32 inode_number) : disk_inode(disk_inode), fs(ext2) {
+Inode::Inode(const Ext2 *ext2, DiskInode *disk_inode, const u32 inode_number) : disk_inode(disk_inode), fs(ext2) {
   if (ext2 == nullptr) { assert(disk_inode == nullptr && inode_number == INVALID_INODE_NO); }
   if (disk_inode == nullptr) { assert(ext2 == nullptr && inode_number == INVALID_INODE_NO); }
   if (disk_inode != nullptr) this->disk_inode->inode_number = inode_number;

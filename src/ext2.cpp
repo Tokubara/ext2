@@ -121,3 +121,8 @@ u32 Ext2::dealloc_data(u32 data_block_id) const {
         this->inode_bitmap->dealloc(data_block_id-this->data_area_start_block);
         return 0;
 }
+
+Inode Ext2::get_inode_from_id(u32 inode_id) const {
+        assert(this->inode_bitmap->test_exist(inode_id));
+        return Inode(this, get_disk_inode_from_id(inode_id), inode_id);
+}

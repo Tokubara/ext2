@@ -5,7 +5,6 @@
 #include "fuse_ext2.h"
 #include "ext2.h"
 #include "inode.h"
-#include "common.h"
 #include <cstring>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -15,6 +14,7 @@
 Ext2* ext2;
 
 int ext2_get_attr(const char *path, struct stat *statbuf) {
+  log_enter;
 memset(statbuf, 0, sizeof(struct stat));
 
 Inode inode = ext2->find_inode_by_full_path(path);
@@ -43,6 +43,7 @@ return 0;
 
 int nxfs_mkdir(const char *path, mode_t mode)
 {
+  log_trace("path: %s", path);
   (void)mode;
   // 先找到父目录
   char* path_copy = (char*)malloc(sizeof(path)+1);
@@ -66,7 +67,7 @@ int nxfs_mkdir(const char *path, mode_t mode)
 
 static int turbo_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fi)
 {
-
+  log_trace("path: %s", path);
   (void) offset;
   (void) fi;
 
@@ -77,9 +78,6 @@ static int turbo_readdir(const char *path, void *buf, fuse_fill_dir_t filler, of
   } else if(!inode.is_dir()) {
     return -ENOTDIR;
   }
-
-    dirent *temp;
-
     std::queue<std::string> entries_str = inode.ls();
 
    while(!entries_str.empty()) {
@@ -92,17 +90,40 @@ static int turbo_readdir(const char *path, void *buf, fuse_fill_dir_t filler, of
 
 int nxfs_rmdir(const char *path)
 {
-  printf("rmdir %s\n", path);
-  char path_copy[strlen(path)+1];
-  strncpy(path_copy, path, strlen(path));
-  path_copy[strlen(path)] = 0;
-  uint32 parent_inode_number = lookup_entry_inode(path_copy,ROOT_INO);
-
-  struct s_inode* parent_inode = read_inode(parent_inode_number);
-  struct s_dir_entry2* last_entry = find_last_entry(*parent_inode);
-  if(strcmp(last_entry->name, "..") == 0){
-    nxfs_unlink(path);
-    return 0;
-  }else
-    return -EPERM;
+  // 除最后一行以外, 都与mkdir相同
+  log_trace("path: %s", path);
+  char* path_copy = (char*)malloc(sizeof(path)+1);
+  strcpy(path_copy,path);
+  auto basename = strrchr(path,'/'); // 现在指向的还有/
+  path_copy[basename-path]='\0';
+  Inode parent_inode = ext2->find_inode_by_full_path(path_copy);
+  if(!parent_inode.is_self_valid() || !parent_inode.is_dir()) {
+    log_error("cannot find parent directory");
+    return -ENOENT;
+  }
+  basename++; // 之前指向的是/, 现在指向下一个
+  return parent_inode.rm(basename);
 }
+
+/**
+ * 无权限检查
+ * */
+static int turbo_open(const char *path, struct fuse_file_info *fi)
+{
+  log_trace("path: %s", path);
+  Inode inode = ext2->find_inode_by_full_path(path);
+  if(inode.is_self_valid()) {
+    return -ENOENT;
+  } else if(!inode.is_reg()) { // 不知道这里对symlink要不要单独处理
+    return -EISDIR; // TODO 根据man 2 open, 目录也不一定会出错, 只有pathname refers to a directory and the access requested  involved  writing  (that  is, O_WRONLY or O_RDWR is set).
+  }
+  // 存入fi
+  auto* fh = new FileHandle{.size=inode.disk_inode->size, .inode_number=inode.disk_inode->inode_number};
+  fi->fh = (u64)fh;
+  return 0;
+}
+
+static int turbo_read(const char *path, char *buf, size_t size, off_t offset,struct fuse_file_info *fi) {
+  Inode inode;
+}
+

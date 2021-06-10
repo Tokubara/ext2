@@ -34,3 +34,9 @@ Bitmap::Bitmap(u32 blocks, u32 start_block_id, BlockDevice* block_device):block_
 void Bitmap::initialize() {
   memset(bitmap_block,0,block_num*BLOCK_SIZE);
 }
+
+bool Bitmap::test_exist(u32 bit_id) {
+  u32 which_byte = bit_id/8;
+  u32 in_offset = bit_id%8;
+  return ((bitmap_block[which_byte]>>in_offset)&1u)>0;
+}

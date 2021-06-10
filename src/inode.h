@@ -29,7 +29,7 @@ struct DirEntry {
 };
 
 struct Inode {
-    Inode(Ext2* ext2, DiskInode* disk_inode, u32 inode_number);
+    Inode(const Ext2* ext2, DiskInode* disk_inode, const u32 inode_number);
     Inode find(const std::string& name, u32* entry_index) const;
     i32 increase_size(u32 need);
     std::queue<std::string> ls() const;
@@ -47,7 +47,7 @@ struct Inode {
     i32 initialize_dir(u32 parent_inode_number);
 public:
     DiskInode* disk_inode;
-    Ext2* fs;
+    const Ext2* fs;
 
     u32 logic_to_phy_block_id(u32 logic_id) const;
 

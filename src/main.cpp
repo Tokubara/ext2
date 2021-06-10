@@ -74,15 +74,25 @@ int main() {
 //  log_trace("%u",ext2_.data_area_start_block);
 
 // {{{2 删除测例
+//  Ext2 ext2_;
+//  ext2_.create(&block_device, block_device.block_num);
+//  Inode tmp = ext2_.root->create("dir0", FileType::DIR);
+//  u32 inode_number0 = tmp.disk_inode->inode_number;
+//  assert(ext2_.root->ls().size()==3);
+//  ext2_.root->rm("dir0");
+//  assert(ext2_.root->ls().size()==2);
+//  tmp = ext2_.root->create("dir0", FileType::DIR);
+//  assert(tmp.disk_inode->inode_number==inode_number0);
+//  assert(ext2_.root->ls().size()==3);
+//  return 0;
+// 存在性测例
   Ext2 ext2_;
   ext2_.create(&block_device, block_device.block_num);
   Inode tmp = ext2_.root->create("dir0", FileType::DIR);
   u32 inode_number0 = tmp.disk_inode->inode_number;
-  assert(ext2_.root->ls().size()==3);
-  ext2_.root->rm("dir0");
-  assert(ext2_.root->ls().size()==2);
-  tmp = ext2_.root->create("dir0", FileType::DIR);
-  assert(tmp.disk_inode->inode_number==inode_number0);
-  assert(ext2_.root->ls().size()==3);
+  assert(inode_number0==1);
+  assert(ext2_.get_inode_from_id(inode_number0).disk_inode->inode_number==inode_number0);
+  assert(ext2_.inode_bitmap->test_exist(inode_number0));
+  assert(!ext2_.inode_bitmap->test_exist(inode_number0+1));
   return 0;
 }

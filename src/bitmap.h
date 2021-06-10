@@ -14,6 +14,7 @@ struct Bitmap {
     u8* bitmap_block; // 这就是它指向的内存区域
     u32 alloc() const;
     void dealloc(u32 bit_id);
+    bool test_exist(u32 bit_id);
     Bitmap(u32 blocks, u32 start_block_id, BlockDevice* block_device);
     void initialize();
 };
