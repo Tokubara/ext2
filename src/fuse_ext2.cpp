@@ -13,7 +13,7 @@
 
 Ext2* ext2;
 
-Inode get_parent_inode_and_basename(const char* path, const char** basename) {
+static Inode get_parent_inode_and_basename(const char* path, const char** basename) {
   char* path_copy = (char*)malloc(sizeof(path)+1);
   strcpy(path_copy,path);
   *basename = strrchr(path,'/'); // 现在指向的还有/
@@ -24,7 +24,7 @@ Inode get_parent_inode_and_basename(const char* path, const char** basename) {
   return parent_inode;
 }
 
-int ext2_get_attr(const char *path, struct stat *statbuf) {
+int ext2_getattr(const char *path, struct stat *statbuf) {
 memset(statbuf, 0, sizeof(struct stat));
 
 Inode inode = ext2->find_inode_by_full_path(path);
@@ -51,7 +51,7 @@ statbuf->st_size = inode.disk_inode->size;
 return 0;
 }
 
-int nxfs_mkdir(const char *path, mode_t mode)
+int ext2_mkdir(const char *path, mode_t mode)
 {
   log_trace("path: %s", path);
   (void)mode;
@@ -70,7 +70,7 @@ int nxfs_mkdir(const char *path, mode_t mode)
   return 0;
 }
 
-static int turbo_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fi)
+int ext2_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fi)
 {
   log_trace("path: %s", path);
   (void) offset;
@@ -93,7 +93,7 @@ static int turbo_readdir(const char *path, void *buf, fuse_fill_dir_t filler, of
   return 0;
 }
 
-int nxfs_rmdir(const char *path)
+int ext2_rmdir(const char *path)
 {
   // 除最后一行以外, 都与mkdir相同
   log_trace("path: %s", path);
@@ -109,7 +109,7 @@ int nxfs_rmdir(const char *path)
 /**
  * 无权限检查
  * */
-static int turbo_open(const char *path, struct fuse_file_info *fi)
+int ext2_open(const char *path, struct fuse_file_info *fi)
 {
   log_trace("path: %s", path);
   Inode inode = ext2->find_inode_by_full_path(path);
@@ -124,7 +124,7 @@ static int turbo_open(const char *path, struct fuse_file_info *fi)
   return 0;
 }
 
-static int turbo_read(const char *path, char *buf, size_t size, off_t offset,struct fuse_file_info *fi) {
+int ext2_read(const char *path, char *buf, size_t size, off_t offset,struct fuse_file_info *fi) {
   FileHandle* fh = (FileHandle*)fi->fh;
   log_trace("inode_number: %u", fh->inode_number);
   assert(fh->inode_number>0);
@@ -137,7 +137,7 @@ static int turbo_read(const char *path, char *buf, size_t size, off_t offset,str
   return read_len;
 }
 
-static int turbo_write(const char *path, const char *buf, size_t size,off_t offset, struct fuse_file_info *fi) {
+int ext2_write(const char *path, const char *buf, size_t size,off_t offset, struct fuse_file_info *fi) {
   FileHandle* fh = (FileHandle*)fi->fh;
   log_trace("inode_number: %u", fh->inode_number);
   assert(fh->inode_number>0);
@@ -147,7 +147,7 @@ static int turbo_write(const char *path, const char *buf, size_t size,off_t offs
   return size;
 }
 
-static int turbo_create(const char *path, mode_t mode,struct fuse_file_info *fi) {
+int ext2_create(const char *path, mode_t mode,struct fuse_file_info *fi) {
   log_trace("path: %s", path);
   const char* basename;
   Inode parent_inode = get_parent_inode_and_basename(path, &basename);
@@ -166,7 +166,7 @@ static int turbo_create(const char *path, mode_t mode,struct fuse_file_info *fi)
   return 0;
 }
 
-int nxfs_unlink(const char *path) { // 这里的实现是把rmdir的实现拷贝过来的
+int ext2_unlink(const char *path) { // 这里的实现是把rmdir的实现拷贝过来的
   log_trace("path: %s", path);
   const char* basename;
   Inode parent_inode = get_parent_inode_and_basename(path, &basename);
@@ -177,7 +177,7 @@ int nxfs_unlink(const char *path) { // 这里的实现是把rmdir的实现拷贝
   return parent_inode.unlink(basename);
 }
 
-//int nxfs_statfs(const char *path, struct statvfs *statInfo) {
+//int ext2_statfs(const char *path, struct statvfs *statInfo) {
 //
 
 
@@ -187,7 +187,7 @@ int nxfs_unlink(const char *path) { // 这里的实现是把rmdir的实现拷贝
 //|new_path的父目录不存在
 //        |new_path父目录不是目录
 //new_path的base部分已存在(在ext2中的link处理的)
-int nxfs_link (const char *old_path, const char *new_path) {
+int ext2_link (const char *old_path, const char *new_path) {
   // {{{2 处理old_path可能的问题
   Inode inode = ext2->find_inode_by_full_path(old_path);
   if(!inode.is_self_valid()) {
@@ -207,7 +207,7 @@ int nxfs_link (const char *old_path, const char *new_path) {
 }
 
 // rename
-int nxfs_rename(const char *oldpath, const char *newpath) {
+int ext2_rename(const char *oldpath, const char *newpath) {
   const char* basename;
   Inode old_parent_inode = get_parent_inode_and_basename(oldpath, &basename);
   if(!old_parent_inode.is_self_valid()) {
@@ -235,7 +235,7 @@ int nxfs_rename(const char *oldpath, const char *newpath) {
 }
 
 // truncate
-int nxfs_truncate (const char * path, off_t new_size, struct fuse_file_info *fi) {
+int ext2_truncate (const char * path, off_t new_size, struct fuse_file_info *fi) {
   Inode inode = ext2->find_inode_by_full_path(path);
   if (!inode.is_self_valid())
   {
