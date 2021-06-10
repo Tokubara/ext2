@@ -87,7 +87,7 @@ int ext2_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offs
     std::queue<std::string> entries_str = inode.ls();
 
    while(!entries_str.empty()) {
-     filler(buf, entries_str.front().c_str(), NULL, 0); // 目录已经包含了.和..
+     filler(buf, entries_str.front().c_str(), NULL, 0, (fuse_fill_dir_flags)0); // 目录已经包含了.和..
      entries_str.pop();
    }
 
@@ -208,7 +208,7 @@ int ext2_link (const char *old_path, const char *new_path) {
 }
 
 // rename
-int ext2_rename(const char *oldpath, const char *newpath) {
+int ext2_rename(const char *oldpath, const char *newpath, unsigned int flags) {
   const char* basename;
   Inode old_parent_inode = get_parent_inode_and_basename(oldpath, &basename);
   if(!old_parent_inode.is_self_valid()) {
@@ -233,6 +233,7 @@ int ext2_rename(const char *oldpath, const char *newpath) {
     return -EEXIST;
   }
   new_parent_inode._write_dirent(basename,inode.disk_inode->inode_number);
+  return 0;
 }
 
 // truncate

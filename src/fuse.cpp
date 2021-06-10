@@ -1,3 +1,4 @@
+#define FUSE_USE_VERSION 32
 #include <fuse.h>
 #include "mylib.h"
 #include "inode.h"
@@ -6,17 +7,17 @@
 
 static struct fuse_operations file_operations = {
         .getattr    = ext2_getattr,
-        .readdir    = ext2_readdir,
         .mkdir      = ext2_mkdir,
-        .rmdir      = ext2_rmdir,
-        .open       = ext2_open,
-        .create     = ext2_create,
-        .read       = ext2_read,
-        .write      = ext2_write,
         .unlink     = ext2_unlink,
-        .truncate = ext2_truncate,
+        .rmdir      = ext2_rmdir,
         .rename = ext2_rename,
         .link = ext2_link,
+        .truncate = ext2_truncate,
+        .open       = ext2_open,
+        .read       = ext2_read,
+        .write      = ext2_write,
+        .readdir    = ext2_readdir,
+        .create     = ext2_create,
 };
 
 void init();

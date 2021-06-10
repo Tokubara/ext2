@@ -22,12 +22,13 @@ INCLUDES = -I $$MHOME/Playground/lib/ubuntu/header `pkg-config --cflags fuse3`
 CXXFLAGS += -MMD -O0 -Wall -Werror -ggdb3 $(INCLUDES) -std=c++17
 LDFLAGS += -L $$MHOME/Playground/lib/ubuntu/lib -l log_c `pkg-config --libs fuse3`
 
-$(BINARY): $(filter-out fuse,$(OBJS))
+$(BINARY): $(filter-out $(OBJ_DIR)/fuse%,$(OBJS))
+	#echo $(info $^)
 	@mkdir -p $(dir $@)
 	$(LD) -o $@ $^ $(LDFLAGS)
 
 fuse: $(BUILD_DIR)/fuse
-$(BUILD_DIR)/fuse: $(filter-out main,$(OBJS))
+$(BUILD_DIR)/fuse: $(filter-out $(OBJ_DIR)/main%,$(OBJS))
 	@mkdir -p $(dir $@)
 	$(LD) -o $@ $^ $(LDFLAGS)
 
