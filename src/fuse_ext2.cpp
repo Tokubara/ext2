@@ -26,6 +26,7 @@ static Inode get_parent_inode_and_basename(const char* path, const char** basena
 }
 
 int ext2_getattr(const char *path, struct stat *statbuf, fuse_file_info* fi) {
+  log_trace("path:%s", path);
   (void)fi;
 memset(statbuf, 0, sizeof(struct stat));
 
@@ -127,6 +128,7 @@ int ext2_open(const char *path, struct fuse_file_info *fi)
 }
 
 int ext2_read(const char *path, char *buf, size_t size, off_t offset,struct fuse_file_info *fi) {
+  log_trace("read:%s", path);
   FileHandle* fh = (FileHandle*)fi->fh;
   log_trace("inode_number: %u", fh->inode_number);
   assert(fh->inode_number>0);
@@ -140,6 +142,7 @@ int ext2_read(const char *path, char *buf, size_t size, off_t offset,struct fuse
 }
 
 int ext2_write(const char *path, const char *buf, size_t size,off_t offset, struct fuse_file_info *fi) {
+  log_trace("read:%s", path);
   FileHandle* fh = (FileHandle*)fi->fh;
   log_trace("inode_number: %u", fh->inode_number);
   assert(fh->inode_number>0);
@@ -190,6 +193,7 @@ int ext2_unlink(const char *path) { // 这里的实现是把rmdir的实现拷贝
 //        |new_path父目录不是目录
 //new_path的base部分已存在(在ext2中的link处理的)
 int ext2_link (const char *old_path, const char *new_path) {
+  log_trace("old_path:%s, new_path:%s", old_path, new_path);
   // {{{2 处理old_path可能的问题
   Inode inode = ext2->find_inode_by_full_path(old_path);
   if(!inode.is_self_valid()) {
@@ -210,6 +214,7 @@ int ext2_link (const char *old_path, const char *new_path) {
 
 // rename
 int ext2_rename(const char *oldpath, const char *newpath, unsigned int flags) {
+  log_trace("old_path:%s, new_path:%s", oldpath, newpath);
   const char* basename;
   Inode old_parent_inode = get_parent_inode_and_basename(oldpath, &basename);
   if(!old_parent_inode.is_self_valid()) {
@@ -239,6 +244,7 @@ int ext2_rename(const char *oldpath, const char *newpath, unsigned int flags) {
 
 // truncate
 int ext2_truncate (const char * path, off_t new_size, struct fuse_file_info *fi) {
+  log_trace("path:%s, new_size:%u", path, new_size);
   Inode inode = ext2->find_inode_by_full_path(path);
   if (!inode.is_self_valid())
   {

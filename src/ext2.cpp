@@ -79,18 +79,18 @@ Inode Ext2::find_inode_by_full_path(const char *path) const {
         }
         std::queue<std::string> path_tokens_str = split_path(path);
         std::string name;
-        Inode* dir = this->root;
+        Inode dir = *this->root;
         while(!path_tokens_str.empty()) {
                 name = path_tokens_str.front();
                 path_tokens_str.pop();
-                if(dir->disk_inode->file_type!=FileType::DIR) {
+                if(dir.disk_inode->file_type!=FileType::DIR) {
                         return Inode::invalid_inode();
                 }
-                *dir = dir->find(name, nullptr);
-                if(!dir->is_self_valid()) return Inode::invalid_inode();
+                dir = dir.find(name, nullptr);
+                if(!dir.is_self_valid()) return Inode::invalid_inode();
         }
 
-        return *dir;
+        return dir;
 }
 
 std::queue<std::string> Ext2::split_path(const char *path) {
