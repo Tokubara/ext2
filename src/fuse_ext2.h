@@ -14,8 +14,6 @@ struct FileHandle {
     u32 size;
     u32 inode_number;
 };
-extern Ext2 *ext2;
-extern BlockDevice* block_device;
 
 int ext2_truncate(const char *path,off_t new_size,struct fuse_file_info *fi);
 int ext2_rename(const char *oldpath,const char *newpath, unsigned int flags);

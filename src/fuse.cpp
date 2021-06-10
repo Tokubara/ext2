@@ -5,6 +5,9 @@
 #include "ext2.h"
 #include "fuse_ext2.h"
 
+Ext2 *ext2;
+BlockDevice* block_device;
+
 static struct fuse_operations file_operations = {
         .getattr    = ext2_getattr,
         .mkdir      = ext2_mkdir,
@@ -23,7 +26,6 @@ static struct fuse_operations file_operations = {
 void init();
 
 int main(int argc, char *argv[]) {
-  BlockDevice block_device{"diskfile"};
 //        struct fuse_args args = FUSE_ARGS_INIT(argc, argv);
   init();
   return fuse_main(argc, argv, &file_operations, NULL);

@@ -11,7 +11,8 @@
 #include <fcntl.h>
 #include <cerrno>
 
-Ext2* ext2;
+extern Ext2 *ext2;
+extern BlockDevice* block_device;
 
 static Inode get_parent_inode_and_basename(const char* path, const char** basename) {
   char* path_copy = (char*)malloc(sizeof(path)+1);
