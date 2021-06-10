@@ -10,6 +10,7 @@
 #include <sys/types.h>
 #include <fcntl.h>
 #include <cerrno>
+#include <queue>
 
 extern Ext2 *ext2;
 extern BlockDevice* block_device;
@@ -20,6 +21,11 @@ static Inode get_parent_inode_and_basename(const char* path, const char** basena
   *basename = strrchr(path,'/'); // 现在指向的还有/
   path_copy[*basename-path]='\0';
   (*basename)+=1; // 之前指向的是/, 现在指向下一个
+  // bug: 未处理父目录本来就是根目录的情况, 比如/a, 那么这样的话, 之前的实现中, path_copy会为空串, 这种情况下, 将它修改为'/'
+  if(strlen(path_copy)==0) {
+    path_copy[0]='/';
+    path_copy[1]='\0';
+  }
   Inode parent_inode = ext2->find_inode_by_full_path(path_copy);
   free(path_copy);
   return parent_inode;
@@ -68,6 +74,14 @@ int ext2_mkdir(const char *path, mode_t mode)
   Inode new_inode = parent_inode.create(basename, FileType::DIR);
   if(!new_inode.is_self_valid()) {
     return -EEXIST;
+  }
+
+  // DEBUG
+  log_debug("ls");
+  auto parent_ls = parent_inode.ls();
+  while(!parent_ls.empty()) {
+    printf("%s\n", parent_ls.front().c_str());
+    parent_ls.pop();
   }
 
   return 0;

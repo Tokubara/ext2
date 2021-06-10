@@ -214,7 +214,7 @@ std::queue<std::string> Inode::ls() const {
   this->read_at(0, this->disk_inode->size, (u8 *) dir_entries);
   for (u32 i = 0; i < dir_num; i++) {
     if (Inode::is_valid(dir_entries[i].inode_number)) {
-      entries_str.push(dir_entries->name);
+      entries_str.push(dir_entries[i].name);
     }
 //    printf("%s\n", dir_entries[i].name);
   }
