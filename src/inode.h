@@ -45,6 +45,9 @@ struct Inode {
  * @return
  */
     i32 initialize_dir(u32 parent_inode_number);
+
+    void rm_direntry(u32 dirent_index);
+
 public:
     DiskInode* disk_inode;
     const Ext2* fs;
@@ -66,7 +69,7 @@ public:
 
     void clear();
 
-private:
+//private:
     void _write_dirent(const char *name, u32 inode_number, u32 index=U32_MAX);
 };
 #endif //EXT2_INODE_H

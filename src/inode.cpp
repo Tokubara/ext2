@@ -312,7 +312,7 @@ i32 Inode::unlink(const char *name) {
   }
   // 可以删除的情况
   // {{{2 清除在父目录中的项, 置为INVALID_INODE_NO
-  this->_write_dirent(name, INVALID_INODE_NO, entry_index);
+  this->rm_direntry(entry_index);
 
   inode.disk_inode->nlinks -= 1;
   // {{{2 是否clear
@@ -408,4 +408,8 @@ void Inode::_write_dirent(const char *name, u32 inode_number, u32 index) {
   dir_entry.inode_number = inode_number;
   u32 offset = index<U32_MAX?index*sizeof(DirEntry):this->disk_inode->size;
   this->write_at(offset, sizeof(DirEntry), (u8 *) &dir_entry);
+}
+
+void Inode::rm_direntry(u32 dirent_index) {
+  this->_write_dirent("",INVALID_INODE_NO,dirent_index);
 }

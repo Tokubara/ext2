@@ -207,8 +207,31 @@ int nxfs_link (const char *old_path, const char *new_path) {
 }
 
 // rename
-int nxfs_rename(const char *path, const char *newpath) {
-
+int nxfs_rename(const char *oldpath, const char *newpath) {
+  const char* basename;
+  Inode old_parent_inode = get_parent_inode_and_basename(oldpath, &basename);
+  if(!old_parent_inode.is_self_valid()) {
+    return -ENOENT;
+  } else if(!old_parent_inode.is_dir()) {
+    return -ENOTDIR;
+  }
+  u32 dirent_index;
+  Inode inode = old_parent_inode.find(basename, &dirent_index);
+  if(!inode.is_self_valid()) {
+    return -ENOENT;
+  }
+  // 去除这个目录项
+  old_parent_inode.rm_direntry(dirent_index);
+  Inode new_parent_inode = get_parent_inode_and_basename(newpath, &basename);
+  if(!new_parent_inode.is_self_valid()) {
+    return -ENOENT;
+  } else if(!new_parent_inode.is_dir()) {
+    return -ENOTDIR;
+  }
+  if(new_parent_inode.find(basename, nullptr).is_self_valid()) {
+    return -EEXIST;
+  }
+  new_parent_inode._write_dirent(basename,inode.disk_inode->inode_number);
 }
 
 // truncate
