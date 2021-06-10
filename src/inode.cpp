@@ -327,16 +327,12 @@ bool Inode::is_reg() const {
   return this->disk_inode->file_type == FileType::REG;
 }
 
-/**
- * 没有清空要回收的数据块, 也没有把indirect这些置为0, 不过改了size, 这只是与increase_size, 感觉不改也行
- * */
-void Inode::clear() {
+std::queue<u32> Inode::get_data_block_id_in_use() const {
   // 清除此inode的数据块
   std::queue<u32> clear_inodes_id;
   u32 cur_block_num = this->get_block_num_by_size(this->disk_inode->size); // 会不断变化
   u32 old_block_num = cur_block_num;
   u32 data_block_num = ceiling(this->disk_inode->size, BLOCK_SIZE);
-  this->disk_inode->size = 0;
   u32 tmp = std::min(cur_block_num, INODE_DIRECT_NUM); // 一开始是存min, 但也可能改成别的
   for (u32 i = 0; i < tmp; i++) {
     clear_inodes_id.push(this->disk_inode->direct[i]);
@@ -354,29 +350,70 @@ void Inode::clear() {
     }
     cur_block_num -= tmp;
     if (cur_block_num > 0) { // 用到了二级块
+      clear_inodes_id.push(this->disk_inode->indirect2); // 回收二级块
+      cur_block_num--; // 二级块
       u32 *indirect2_array = (u32 *) fs->block_device->get_block_cache(this->disk_inode->indirect2);
       data_block_num -= (INDEX_NO_PER_BLOCK + INODE_DIRECT_NUM);
       u32 indirect1_num = ceiling(data_block_num, INDEX_NO_PER_BLOCK);
-      for (u32 i = 0; i < indirect1_num; i++) { // 写满的内容
+      for (u32 i = 0; i < indirect1_num; i++) {
+        clear_inodes_id.push(indirect2_array[i]); // 回收一级块
+        cur_block_num--;
         u32 *cur_indirect1 = (u32 *) fs->block_device->get_block_cache(indirect2_array[i]);
         tmp = (i == indirect1_num - 1) ? data_block_num % INDEX_NO_PER_BLOCK : INDEX_NO_PER_BLOCK;
         for (u32 j = 0; j < tmp; j++) {
-          clear_inodes_id.push(cur_indirect1[j]);
+          clear_inodes_id.push(cur_indirect1[j]); // 回收数据块
         }
         cur_block_num -= tmp;
-        clear_inodes_id.push(indirect2_array[i]);
-        cur_block_num--; // 减去一级块
       }
-      clear_inodes_id.push(this->disk_inode->indirect2);
-      cur_block_num--; // 现在是一级索引块以及放于一级索引块的数据块
     }
   }
   assert(cur_block_num == 0);
   assert(old_block_num == clear_inodes_id.size());
+  return clear_inodes_id;
+}
+
+/**
+ * 没有清空要回收的数据块, 也没有把indirect这些置为0, 不过改了size, 这只是与increase_size, 感觉不改也行
+ * 此函数应该保序, 越是后面的块, 越会被回收(truncate性质如此), 因此, 比如如果是一级索引块, 那么应该push一级索引块, 再比如而级索引块, 应该先push二级索引块, 再push一级索引块, 然后才是数据块
+ * */
+void Inode::clear() const {
+  std::queue<u32> clear_inodes_id = this->get_data_block_id_in_use();
+  this->disk_inode->size = 0;
   while (!clear_inodes_id.empty()) {
     this->fs->dealloc_data(clear_inodes_id.front());
     clear_inodes_id.pop();
   }
+}
+
+/** 文件的新大小是new_size, 需要维护size
+ * */
+void Inode::truncate(const u64 new_size) {
+  assert(this->is_reg());
+  if(new_size==this->disk_inode->size) {
+    return;
+  }
+  // {{{2 如果文件大小增大
+  if(new_size>this->disk_inode->size) {
+    u32 len = new_size-this->disk_inode->size; // 要写这么多字节
+    u8* buf = (u8*)malloc(len);
+    memset(buf,0,len);
+    this->write_at(this->disk_inode->size, len, buf);
+    free(buf);
+    this->disk_inode->size = new_size;
+    return;
+  }
+  // {{{2 如果文件大小变小
+  u32 new_block_num = this->get_block_num_by_size(new_size);
+  std::queue<u32> block_in_use = this->get_data_block_id_in_use();
+  for(u32 i = 0; i< new_block_num; i++) {
+    block_in_use.pop();
+  }
+  // 剩下的就是要被清除的了
+  while(!block_in_use.empty()) {
+    this->fs->dealloc_data(block_in_use.front());
+    block_in_use.pop();
+  }
+  this->disk_inode->size = new_size;
 }
 
 /**
@@ -413,3 +450,4 @@ void Inode::_write_dirent(const char *name, u32 inode_number, u32 index) {
 void Inode::rm_direntry(u32 dirent_index) {
   this->_write_dirent("",INVALID_INODE_NO,dirent_index);
 }
+

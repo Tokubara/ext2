@@ -67,9 +67,13 @@ public:
 
     bool is_reg() const;
 
-    void clear();
+    void clear() const;
+
+    std::queue<u32> get_data_block_id_in_use() const;
 
 //private:
     void _write_dirent(const char *name, u32 inode_number, u32 index=U32_MAX);
+
+    void truncate(u64 new_size);
 };
 #endif //EXT2_INODE_H

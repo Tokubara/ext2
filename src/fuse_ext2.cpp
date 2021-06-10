@@ -235,4 +235,18 @@ int nxfs_rename(const char *oldpath, const char *newpath) {
 }
 
 // truncate
+int nxfs_truncate (const char * path, off_t new_size, struct fuse_file_info *fi) {
+  Inode inode = ext2->find_inode_by_full_path(path);
+  if (!inode.is_self_valid())
+  {
+    log_error("entry_inode not found for %s\n", path);
+    return -ENOENT;
+  }
+  if (!inode.is_reg()) {
+    log_error("%s is not a dir", path);
+    return -EISDIR;
+  }
+  inode.truncate(new_size);
+  return 0;
+}
 
