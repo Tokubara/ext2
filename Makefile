@@ -6,8 +6,8 @@ OBJ_DIR=obj/
 SRCS := $(wildcard src/*.cpp)
 
 # fuse涉及的文件
-FUSE_SRCS := $(wildcard src/*fuse*)
-SRCS := $(filter-out $(FUSE_SRCS), $(SRCS))
+#FUSE_SRCS := $(wildcard src/*fuse*)
+#SRCS := $(filter-out $(FUSE_SRCS), $(SRCS))
 
 OBJS = $(SRCS:src/%.cpp=$(OBJ_DIR)/%.o)
 BUILD_DIR ?= build/
@@ -17,12 +17,17 @@ BINARY = $(BUILD_DIR)/main
 LD=g++
 
 # TODO
-INCLUDES = -I $$MHOME/Playground/lib/ubuntu/header
+INCLUDES = -I $$MHOME/Playground/lib/ubuntu/header `pkg-config --cflags fuse3`
 #$(info INCLUDES=${INCLUDES})
 CXXFLAGS += -MMD -O0 -Wall -Werror -ggdb3 $(INCLUDES) -std=c++17
-LDFLAGS += -L $$MHOME/Playground/lib/ubuntu/lib -l log_c
+LDFLAGS += -L $$MHOME/Playground/lib/ubuntu/lib -l log_c `pkg-config --libs fuse3`
 
-$(BINARY): $(OBJS)
+$(BINARY): $(filter-out fuse,$(OBJS))
+	@mkdir -p $(dir $@)
+	$(LD) -o $@ $^ $(LDFLAGS)
+
+fuse: $(BUILD_DIR)/fuse
+$(BUILD_DIR)/fuse: $(filter-out main,$(OBJS))
 	@mkdir -p $(dir $@)
 	$(LD) -o $@ $^ $(LDFLAGS)
 
@@ -34,6 +39,6 @@ $(OBJS): $(OBJ_DIR)/%.o: src/%.cpp
 -include $(OBJS:.o=.d)
 #.d和.o在同一个目录下
 
-.PHONY: clean
+.PHONY: clean fuse
 clean:
 	rm -rf $(OBJ_DIR) $(BUILD_DIR)
