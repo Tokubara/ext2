@@ -52,7 +52,8 @@ public:
     u32 logic_to_phy_block_id(u32 logic_id) const;
 
     Inode create(const char *string, FileType type);
-    i32 rm(const char *string);
+    i32 unlink(const char *string);
+    i32 link(const char* name, Inode* inode);
     static Inode invalid_inode();
 
     void initialize_regfile() const;
@@ -64,5 +65,8 @@ public:
     bool is_reg() const;
 
     void clear();
+
+private:
+    void _write_dirent(const char *name, u32 inode_number, u32 index=U32_MAX);
 };
 #endif //EXT2_INODE_H

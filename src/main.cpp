@@ -79,7 +79,7 @@ int main() {
 //  Inode tmp = ext2_.root->create("dir0", FileType::DIR);
 //  u32 inode_number0 = tmp.disk_inode->inode_number;
 //  assert(ext2_.root->ls().size()==3);
-//  ext2_.root->rm("dir0");
+//  ext2_.root->unlink("dir0");
 //  assert(ext2_.root->ls().size()==2);
 //  tmp = ext2_.root->create("dir0", FileType::DIR);
 //  assert(tmp.disk_inode->inode_number==inode_number0);

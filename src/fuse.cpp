@@ -433,7 +433,7 @@ static int ext2_rm(const char *path)
                 //original path
         else
         {
-                printf(GRN BOLD "rm calling path_to_inode\n" RESET);
+                printf(GRN BOLD "unlink calling path_to_inode\n" RESET);
                 path_to_inode(subpath, &ino);
                 // printf("Inode for the path - %s - %d\n", path, ino);
 

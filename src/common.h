@@ -17,6 +17,7 @@ const u32 NAME_LENGTH_LIMIT = 27;
 const u32 INODE_DIRECT_NUM = 26;
 const u32 FILE_MAX_BLOCK_NUM = INODE_DIRECT_NUM+INDEX_NO_PER_BLOCK+INDEX_NO_PER_BLOCK*INDEX_NO_PER_BLOCK;
 const u32 INVALID_INODE_NO = 0xffffffff;
+const u32 U32_MAX = 0xffffffff;
 
 /**
  * ceiling(x/y)

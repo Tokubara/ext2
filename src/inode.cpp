@@ -130,14 +130,8 @@ i32 Inode::write_at(const u32 offset, u32 len, const u8 *buffer) {
 
 i32 Inode::initialize_dir(u32 parent_inode_number = 0) {
   this->disk_inode->initialize(FileType::DIR);
-  DirEntry dir[2];
-  assert(sizeof(DirEntry) == 32);
-  dir[0].inode_number = this->disk_inode->inode_number;
-  memcpy(dir[0].name, ".", sizeof("."));
-  dir[1].inode_number = parent_inode_number;
-  memcpy(dir[1].name, "..", sizeof(".."));
-  this->write_at(0, sizeof(DirEntry) * 2, (u8 *) dir);
-
+  this->_write_dirent(".",  this->disk_inode->inode_number);
+  this->_write_dirent("..",  parent_inode_number);
 //  log_trace("first data block id:%u", this->disk_inode->direct[0]);
   return 0;
 }
@@ -192,6 +186,9 @@ void DiskInode::initialize(FileType type) {
   this->file_type = type;
 }
 
+/**
+ * 不会处理offset+len>size的情况, 调用者保证
+ * */
 i32 Inode::read_at(u32 offset, u32 len, u8 *buffer) const {
   assert(offset + len <= this->disk_inode->size);
   u32 in_offset = offset % BLOCK_SIZE;
@@ -246,10 +243,7 @@ Inode Inode::create(const char *name, FileType type) {
   } else {
     TODO();
   }
-  DirEntry dir_entry;
-  strcpy(dir_entry.name, name);
-  dir_entry.inode_number = new_inode_number;
-  this->write_at(this->disk_inode->size, sizeof(DirEntry), (u8 *) &dir_entry);
+  this->_write_dirent(name, new_inode_number);
   return inode;
 }
 
@@ -298,7 +292,9 @@ bool Inode::is_dir() const {
   return this->disk_inode->file_type == FileType::DIR;
 }
 
-i32 Inode::rm(const char *name) {
+/** 处理了两种错误情况, name找不到, 或者是非空目录
+ * */
+i32 Inode::unlink(const char *name) {
   assert(this->is_dir());
   u32 entry_index;
   Inode inode = this->find(name, &entry_index);
@@ -316,10 +312,7 @@ i32 Inode::rm(const char *name) {
   }
   // 可以删除的情况
   // {{{2 清除在父目录中的项, 置为INVALID_INODE_NO
-  DirEntry tmp_entry{};
-  strcpy(tmp_entry.name, name);
-  tmp_entry.inode_number = INVALID_INODE_NO;
-  this->write_at(entry_index * sizeof(DirEntry), sizeof(DirEntry), (u8 *) &tmp_entry);
+  this->_write_dirent(name, INVALID_INODE_NO, entry_index);
   inode.disk_inode->nlinks -= 1;
   // {{{2 是否clear
   if (inode.is_dir() || (inode.is_reg() && inode.disk_inode->nlinks == 0)) { // 之前已经减了
@@ -383,4 +376,35 @@ void Inode::clear() {
     this->fs->dealloc_data(clear_inodes_id.front());
     clear_inodes_id.pop();
   }
+}
+
+/**
+ * 在当前目录下(this是一个目录), 创建一个目录项,
+ * */
+i32 Inode::link(const char* name, Inode* inode) {
+  assert(this->is_dir());
+  assert(inode->is_self_valid());
+  assert(this->fs->inode_bitmap->test_exist(inode->disk_inode->inode_number)); // 感觉有点多余
+  assert(inode->is_reg());
+  // {{{2 判断是否有同名的
+  Inode tmp_inode = this->find(name, nullptr);
+  if (tmp_inode.is_self_valid()) {
+    log_error("link fail: %s has exists", name);
+    return -EEXIST;
+  }
+  // {{{2 设置nlinks
+  inode->disk_inode->nlinks++;
+  // {{{2 写目录项
+  this->_write_dirent(name, inode->disk_inode->inode_number);
+  return 0;
+}
+
+void Inode::_write_dirent(const char *name, u32 inode_number, u32 index) {
+  assert(sizeof(DirEntry) == 32);
+  assert(this->is_dir());
+  DirEntry dir_entry;
+  strcpy(dir_entry.name, name);
+  dir_entry.inode_number = inode_number;
+  u32 offset = index<U32_MAX?index*sizeof(DirEntry):this->disk_inode->size;
+  this->write_at(offset, sizeof(DirEntry), (u8 *) &dir_entry);
 }
