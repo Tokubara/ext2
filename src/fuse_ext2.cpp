@@ -24,7 +24,8 @@ static Inode get_parent_inode_and_basename(const char* path, const char** basena
   return parent_inode;
 }
 
-int ext2_getattr(const char *path, struct stat *statbuf) {
+int ext2_getattr(const char *path, struct stat *statbuf, fuse_file_info* fi) {
+  (void)fi;
 memset(statbuf, 0, sizeof(struct stat));
 
 Inode inode = ext2->find_inode_by_full_path(path);
@@ -70,7 +71,7 @@ int ext2_mkdir(const char *path, mode_t mode)
   return 0;
 }
 
-int ext2_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fi)
+int ext2_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fi, enum fuse_readdir_flags flags)
 {
   log_trace("path: %s", path);
   (void) offset;

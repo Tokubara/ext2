@@ -14,6 +14,9 @@ static struct fuse_operations file_operations = {
         .read       = ext2_read,
         .write      = ext2_write,
         .unlink     = ext2_unlink,
+        .truncate = ext2_truncate,
+        .rename = ext2_rename,
+        .link = ext2_link,
 };
 
 void init();
