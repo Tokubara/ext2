@@ -48,7 +48,7 @@ int main() {
 //  ext2_.root->ls();
 //  Inode file0 = ext2_.root->create("file0", FileType::DIR);
 //  auto file0_content = "I hate you";
-//  file0.write_at(0, strlen(file0_content),(u8*)file0_content);
+//  file0._write_at(0, strlen(file0_content),(u8*)file0_content);
 //  u8 buf[100]{};
 //  file0._read_at(1,10,buf);
 //  for(u32 i = 0; i<10; i++) {
@@ -58,7 +58,7 @@ int main() {
 //  dir0.ls();
 //  Inode file1 = dir0.create("file1", FileType::REG);
 //  auto file1_content = "I still hate you";
-//  file1.write_at(0, strlen(file1_content),(u8*)file1_content);
+//  file1._write_at(0, strlen(file1_content),(u8*)file1_content);
 //  log_debug("strlen:%lu", strlen(file1_content));
 //  file1._read_at(0,strlen(file1_content),buf);
 //  for(u32 i = 0; i<strlen(file1_content); i++) {

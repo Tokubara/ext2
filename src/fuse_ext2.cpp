@@ -150,7 +150,7 @@ int ext2_write(const char *path, const char *buf, size_t size,off_t offset, stru
   assert(fh->inode_number>0);
   Inode inode = ext2->get_inode_from_id(fh->inode_number);
   if(size==0) return 0; // 虽然按理说这样write_at也不会出错
-  inode.write_at(offset,size,(u8*)buf);
+  inode.write_at(offset, size, (u8 *) buf);
   return size;
 }
 

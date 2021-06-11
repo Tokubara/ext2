@@ -124,8 +124,7 @@ i32 Inode::_increase_size(u32 new_size) {
   return 0;
 }
 
-i32 Inode::write_at(const u32 offset, u32 len, const u8 *buffer) {
-  this->fs->wrlock();
+i32 Inode::_write_at(const u32 offset, u32 len, const u8 *buffer) {
   _increase_size(offset + len);
   u32 in_offset = offset % BLOCK_SIZE;
   u32 logic_block_id = offset / BLOCK_SIZE;
@@ -139,7 +138,6 @@ i32 Inode::write_at(const u32 offset, u32 len, const u8 *buffer) {
     cur_len += std::min(len - cur_len, BLOCK_SIZE - in_offset);
     logic_block_id++;
   }
-  this->fs->unlock();
   return 0;
 }
 
@@ -428,7 +426,7 @@ void Inode::truncate(const u64 new_size) {
     u32 len = new_size-this->disk_inode->size; // 要写这么多字节
     u8* buf = (u8*)malloc(len);
     memset(buf,0,len);
-    this->write_at(this->disk_inode->size, len, buf);
+    this->_write_at(this->disk_inode->size, len, buf);
     free(buf);
     this->disk_inode->size = new_size;
     this->fs->unlock();
@@ -480,7 +478,7 @@ void Inode::_write_dirent(const char *name, u32 inode_number, u32 index) {
   strcpy(dir_entry.name, name);
   dir_entry.inode_number = inode_number;
   u32 offset = index<U32_MAX?index*sizeof(DirEntry):this->disk_inode->size;
-  this->write_at(offset, sizeof(DirEntry), (u8 *) &dir_entry);
+  this->_write_at(offset, sizeof(DirEntry), (u8 *) &dir_entry);
 }
 
 void Inode::_rm_direntry(u32 dirent_index) {
@@ -490,6 +488,13 @@ void Inode::_rm_direntry(u32 dirent_index) {
 i32 Inode::read_at(u32 offset, u32 len, u8 *buffer) const {
   this->fs->rdlock();
   i32 ret = this->_read_at(offset, len, buffer);
+  this->fs->unlock();
+  return ret;
+}
+
+i32 Inode::write_at(const u32 offset, u32 len, const u8 *buffer) {
+  this->fs->wrlock();
+  i32 ret = this->_write_at(offset, len, buffer);
   this->fs->unlock();
   return ret;
 }

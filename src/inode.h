@@ -41,7 +41,8 @@ struct Inode {
  * */
     static  u32 get_block_num_by_size(const u32 size);
 
-    i32 write_at(u32 offset, u32 len, const u8* buffer);
+    i32 _write_at(const u32 offset, u32 len, const u8* buffer);
+    i32 write_at(const u32 offset, u32 len, const u8* buffer);
 /**
  * 初始化目录
  * @return
