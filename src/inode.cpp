@@ -222,13 +222,13 @@ i32 Inode::_read_at(u32 offset, u32 len, u8 *buffer) const {
   return 0;
 }
 
-// 虽然是顶层函数, 不加锁, 因为调用了read_at, 加了锁, 但是这样还是不够清晰, 可以选择加锁, 但是会慢一些
-std::queue<std::string> Inode::ls() const {
+// 底层
+std::queue<std::string> Inode::_ls() const {
   assert(this->disk_inode->file_type == FileType::DIR);
   std::queue<std::string> entries_str;
   u32 dir_num = this->disk_inode->size / sizeof(DirEntry);
   auto *dir_entries = new DirEntry[dir_num];
-  this->read_at(0, this->disk_inode->size, (u8 *) dir_entries);
+  this->_read_at(0, this->disk_inode->size, (u8 *) dir_entries);
   for (u32 i = 0; i < dir_num; i++) {
     if (Inode::is_valid(dir_entries[i].inode_number)) {
       entries_str.push(dir_entries[i].name);
@@ -327,7 +327,7 @@ i32 Inode::unlink(const char *name) {
     return -ENOENT;
   }
   if (inode.is_dir()) { // 非空目录不能删除
-    auto ret = inode.ls().size();
+    auto ret = inode._ls().size();
     assert(ret >= 2);
     if (ret > 2) {
       log_error("%s is not empty", name);
@@ -495,6 +495,13 @@ i32 Inode::read_at(u32 offset, u32 len, u8 *buffer) const {
 i32 Inode::write_at(const u32 offset, u32 len, const u8 *buffer) {
   this->fs->wrlock();
   i32 ret = this->_write_at(offset, len, buffer);
+  this->fs->unlock();
+  return ret;
+}
+
+std::queue<std::string> Inode::ls() const {
+  this->fs->rdlock();
+  auto ret = this->_ls();
   this->fs->unlock();
   return ret;
 }

@@ -32,6 +32,7 @@ struct Inode {
     Inode(Ext2* ext2, DiskInode* disk_inode, const u32 inode_number);
     Inode _find(const std::string& name, u32* entry_index) const;
     i32 _increase_size(u32 new_size);
+    std::queue<std::string> _ls() const;
     std::queue<std::string> ls() const;
     i32 _read_at(u32 offset, u32 len, u8* buffer) const;
     i32 read_at(u32 offset, u32 len, u8* buffer) const;
