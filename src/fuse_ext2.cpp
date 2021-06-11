@@ -237,3 +237,8 @@ int ext2_truncate (const char * path, off_t new_size, struct fuse_file_info *fi)
   return 0;
 }
 
+int ext2_fsync(const char *path, int datasync, struct fuse_file_info *fi) {
+  ext2->block_device->sync();
+  return 0;
+}
+

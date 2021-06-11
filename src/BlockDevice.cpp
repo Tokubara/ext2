@@ -24,3 +24,7 @@ u8* BlockDevice::get_block_cache(u32 block_id) {
   assert(block_id<file_size/BLOCK_SIZE);
   return block+BLOCK_SIZE*block_id;
 }
+
+void BlockDevice::sync() {
+  msync((void*)block, file_size, MS_SYNC);
+}

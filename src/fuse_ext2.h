@@ -27,5 +27,6 @@ int ext2_readdir(const char *path,void *buf,fuse_fill_dir_t filler,off_t offset,
 int ext2_mkdir(const char *path,mode_t mode);
 int ext2_getattr(const char *path,struct stat *statbuf, fuse_file_info* fi);
 int ext2_open(const char *path, struct fuse_file_info *fi);
+int ext2_fsync(const char *path, int datasync, struct fuse_file_info *fi);
 
 #endif //EXT2_FUSE_EXT2_H

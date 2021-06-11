@@ -17,10 +17,10 @@ BINARY = $(BUILD_DIR)/main
 LD=g++
 
 # TODO
-INCLUDES = -I $$MHOME/Playground/lib/ubuntu/header `pkg-config --cflags fuse3`
+INCLUDES = -I header `pkg-config --cflags fuse3`
 #$(info INCLUDES=${INCLUDES})
 CXXFLAGS += -MMD -O0 -Wall -Werror -ggdb3 $(INCLUDES) -std=c++17
-LDFLAGS += -L $$MHOME/Playground/lib/ubuntu/lib -l log_c `pkg-config --libs fuse3`
+LDFLAGS += -L lib -l log_c `pkg-config --libs fuse3`
 
 $(BINARY): $(filter-out $(OBJ_DIR)/fuse%,$(OBJS))
 	#echo $(info $^)

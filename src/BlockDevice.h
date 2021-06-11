@@ -18,6 +18,7 @@ struct BlockDevice {
     u32 block_num;
     BlockDevice(std::string file_path);
     ~BlockDevice();
+    void sync();
     u8* get_block_cache(u32 block_id);
 };
 

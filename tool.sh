@@ -14,6 +14,14 @@ fuse_run() {
   ./fuse -s -d fuse_test
 }
 
+fuse_rr() {
+  cd ~
+  fusermount -u fuse_test
+  rm -rf fuse_test
+  mkdir fuse_test
+  ./fuse fuse_test
+}
+
 fuse_gdb() {
   cd ~
   fusermount -u fuse_test
@@ -25,6 +33,12 @@ fuse_gdb() {
 fuse_fi() {
   cd ~
   fusermount -u fuse_test
+}
+
+submit() {
+  mv -r ../ext2 ~/Desktop/
+  cd ~/Desktop/
+  rm -rf diskfile log log.md obj/ .gitignore .idea/ cmake-build-debug/ build/ gdb_history.txt gcc_error.txt tags .DS_Store
 }
 
 export -f out
