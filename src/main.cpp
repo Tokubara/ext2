@@ -50,7 +50,7 @@ int main() {
 //  auto file0_content = "I hate you";
 //  file0.write_at(0, strlen(file0_content),(u8*)file0_content);
 //  u8 buf[100]{};
-//  file0.read_at(1,10,buf);
+//  file0._read_at(1,10,buf);
 //  for(u32 i = 0; i<10; i++) {
 //    putchar(buf[i]);
 //  }
@@ -60,14 +60,14 @@ int main() {
 //  auto file1_content = "I still hate you";
 //  file1.write_at(0, strlen(file1_content),(u8*)file1_content);
 //  log_debug("strlen:%lu", strlen(file1_content));
-//  file1.read_at(0,strlen(file1_content),buf);
+//  file1._read_at(0,strlen(file1_content),buf);
 //  for(u32 i = 0; i<strlen(file1_content); i++) {
 //    putchar(buf[i]);
 //  }
-//  Inode tmp = ext2_.find_inode_by_full_path("/dir0/file1");
+//  Inode tmp = ext2_._find_inode_by_full_path("/dir0/file1");
 //  assert(tmp.disk_inode->file_type==FileType::REG);
 //  assert(!dir0.create("file1",FileType::DIR).is_self_valid());
-//  tmp = ext2_.find_inode_by_full_path("file3");
+//  tmp = ext2_._find_inode_by_full_path("file3");
 //  assert(!tmp.is_self_valid());
 //  ext2_.root->ls();
 //  log_trace("%u",ext2.data_area_start_block);

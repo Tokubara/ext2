@@ -10,6 +10,7 @@
 #include "BlockDevice.h"
 #include "bitmap.h"
 #include "inode.h"
+#include <pthread.h>
 
 struct SuperBlock {
     u32 magic;
@@ -24,8 +25,23 @@ struct SuperBlock {
 
 struct Ext2 {
     i32 create(BlockDevice* block_device, u32 total_blocks, u32 inode_bitmap_blocks = INODE_BITMAP_BLOCKS);
-    DiskInode* get_disk_inode_from_id(const u32 inode_id) const;
+    DiskInode* _get_disk_inode_from_id(const u32 inode_id) const;
     Inode get_inode_from_id(u32 inode_id) const;
+    int rename(const char *oldpath, const char *newpath);
+    void open(BlockDevice*);
+    u32 _alloc_data();
+    u32 _alloc_inode();
+    u32 _dealloc_data(u32 data_block_id);
+    u32 _dealloc_inode(u32 inode_number);
+    Inode _find_inode_by_full_path(const char *path);
+    Inode find_inode_by_full_path(const char *path);
+    static std::queue<std::string> split_path(const char *path);
+    Inode _get_parent_inode_and_basename(const char* path, const char** basename);
+    Inode get_parent_inode_and_basename(const char* path, const char** basename);
+    void rdlock();
+    void wrlock();
+    void unlock();
+
     Inode* root; // 好像不能有
     DiskInode* disk_inode_start;
     BlockDevice* block_device; // 这里存引用真的靠谱么
@@ -33,18 +49,7 @@ struct Ext2 {
     Bitmap* data_bitmap;
     u32 inode_area_start_block;
     u32 data_area_start_block;
-    void open(BlockDevice*);
-    u32 alloc_data() const;
-    u32 alloc_inode() const;
-    u32 dealloc_data(u32 data_block_id) const;
-    u32 dealloc_inode(u32 inode_number) const;
-
-    Inode find_inode_by_full_path(const char *path) const;
-
-    i32 link(const char* old_path, const char* new_path);
-
-
-    static std::queue<std::string> split_path(const char *path);
+    pthread_rwlock_t lock;
 };
 
 #endif //EXT2_EXT2_H

@@ -16,19 +16,7 @@ extern Ext2 *ext2;
 extern BlockDevice* block_device;
 
 static Inode get_parent_inode_and_basename(const char* path, const char** basename) {
-  char* path_copy = (char*)malloc(sizeof(path)+1);
-  strcpy(path_copy,path);
-  *basename = strrchr(path,'/'); // 现在指向的还有/
-  path_copy[*basename-path]='\0';
-  (*basename)+=1; // 之前指向的是/, 现在指向下一个
-  // bug: 未处理父目录本来就是根目录的情况, 比如/a, 那么这样的话, 之前的实现中, path_copy会为空串, 这种情况下, 将它修改为'/'
-  if(strlen(path_copy)==0) {
-    path_copy[0]='/';
-    path_copy[1]='\0';
-  }
-  Inode parent_inode = ext2->find_inode_by_full_path(path_copy);
-  free(path_copy);
-  return parent_inode;
+  return ext2->get_parent_inode_and_basename(path, basename);
 }
 
 int ext2_getattr(const char *path, struct stat *statbuf, fuse_file_info* fi) {
@@ -67,7 +55,7 @@ int ext2_mkdir(const char *path, mode_t mode)
   const char* basename;
   Inode parent_inode = get_parent_inode_and_basename(path, &basename);
   if(!parent_inode.is_self_valid() || !parent_inode.is_dir()) {
-    log_error("cannot find parent directory");
+    log_error("cannot _find parent directory");
     return -ENOENT;
   }
 
@@ -117,7 +105,7 @@ int ext2_rmdir(const char *path)
   const char* basename;
   Inode parent_inode = get_parent_inode_and_basename(path, &basename);
   if(!parent_inode.is_self_valid() || !parent_inode.is_dir()) {
-    log_error("cannot find parent directory");
+    log_error("cannot _find parent directory");
     return -ENOENT;
   }
   return parent_inode.unlink(basename);
@@ -151,7 +139,7 @@ int ext2_read(const char *path, char *buf, size_t size, off_t offset,struct fuse
     return 0;
   }
   u32 read_len = std::min((u64)(fh->size-offset),size); //? 不知道这里为啥报错
-  inode.read_at(offset,read_len,(u8*)buf);
+  inode.read_at(offset, read_len, (u8 *) buf);
   return read_len;
 }
 
@@ -190,7 +178,7 @@ int ext2_unlink(const char *path) { // 这里的实现是把rmdir的实现拷贝
   const char* basename;
   Inode parent_inode = get_parent_inode_and_basename(path, &basename);
   if(!parent_inode.is_self_valid() || !parent_inode.is_dir()) {
-    log_error("cannot find parent directory");
+    log_error("cannot _find parent directory");
     return -ENOENT;
   }
   return parent_inode.unlink(basename);
@@ -229,31 +217,7 @@ int ext2_link (const char *old_path, const char *new_path) {
 // rename
 int ext2_rename(const char *oldpath, const char *newpath, unsigned int flags) {
   log_trace("old_path:%s, new_path:%s", oldpath, newpath);
-  const char* basename;
-  Inode old_parent_inode = get_parent_inode_and_basename(oldpath, &basename);
-  if(!old_parent_inode.is_self_valid()) {
-    return -ENOENT;
-  } else if(!old_parent_inode.is_dir()) {
-    return -ENOTDIR;
-  }
-  u32 dirent_index;
-  Inode inode = old_parent_inode.find(basename, &dirent_index);
-  if(!inode.is_self_valid()) {
-    return -ENOENT;
-  }
-  // 去除这个目录项
-  old_parent_inode.rm_direntry(dirent_index);
-  Inode new_parent_inode = get_parent_inode_and_basename(newpath, &basename);
-  if(!new_parent_inode.is_self_valid()) {
-    return -ENOENT;
-  } else if(!new_parent_inode.is_dir()) {
-    return -ENOTDIR;
-  }
-  if(new_parent_inode.find(basename, nullptr).is_self_valid()) {
-    return -EEXIST;
-  }
-  new_parent_inode._write_dirent(basename,inode.disk_inode->inode_number);
-  return 0;
+  return ext2->rename(oldpath, newpath);
 }
 
 // truncate

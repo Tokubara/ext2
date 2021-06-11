@@ -30,11 +30,13 @@ struct DirEntry {
 
 struct Inode {
     Inode(const Ext2* ext2, DiskInode* disk_inode, const u32 inode_number);
-    Inode find(const std::string& name, u32* entry_index) const;
-    i32 increase_size(u32 need);
+    Inode _find(const std::string& name, u32* entry_index) const;
+    i32 _increase_size(u32 new_size);
     std::queue<std::string> ls() const;
+    i32 _read_at(u32 offset, u32 len, u8* buffer) const;
     i32 read_at(u32 offset, u32 len, u8* buffer) const;
-/**
+
+    /**
  * 根据文件大小, 计算需要的索引块和数据块数的总和, 已测试
  * */
     static  u32 get_block_num_by_size(const u32 size);
@@ -44,22 +46,22 @@ struct Inode {
  * 初始化目录
  * @return
  */
-    i32 initialize_dir(u32 parent_inode_number);
+    i32 _initialize_dir(u32 parent_inode_number);
 
-    void rm_direntry(u32 dirent_index);
+    void _rm_direntry(u32 dirent_index);
 
 public:
     DiskInode* disk_inode;
-    const Ext2* fs;
+    Ext2* fs;
 
-    u32 logic_to_phy_block_id(u32 logic_id) const;
+    u32 _logic_to_phy_block_id(u32 logic_id) const;
 
     Inode create(const char *string, FileType type);
     i32 unlink(const char *string);
     i32 link(const char* name, Inode* inode);
     static Inode invalid_inode();
 
-    void initialize_regfile() const;
+    void _initialize_regfile() const;
     bool is_self_valid() const;
     bool is_dir() const;
 
@@ -67,13 +69,14 @@ public:
 
     bool is_reg() const;
 
-    void clear() const;
+    void _clear() const;
 
-    std::queue<u32> get_data_block_id_in_use() const;
+    std::queue<u32> _get_data_block_id_in_use() const;
 
 //private:
     void _write_dirent(const char *name, u32 inode_number, u32 index=U32_MAX);
 
     void truncate(u64 new_size);
 };
+
 #endif //EXT2_INODE_H
