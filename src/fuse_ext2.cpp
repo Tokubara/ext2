@@ -130,7 +130,7 @@ int ext2_open(const char *path, struct fuse_file_info *fi)
 {
   log_trace("path: %s", path);
   Inode inode = ext2->find_inode_by_full_path(path);
-  if(inode.is_self_valid()) {
+  if(!inode.is_self_valid()) {
     return -ENOENT;
   } else if(!inode.is_reg()) { // 不知道这里对symlink要不要单独处理
     return -EISDIR; // TODO 根据man 2 open, 目录也不一定会出错, 只有pathname refers to a directory and the access requested  involved  writing  (that  is, O_WRONLY or O_RDWR is set).
