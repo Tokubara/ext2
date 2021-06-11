@@ -126,7 +126,7 @@ u32 Ext2::_dealloc_data(u32 data_block_id) {
 }
 
 // 此函数需要上锁, 调用它不是在inode中, 而是作为顶层函数在fuse_ext2中用fh时调用过,
-Inode Ext2::get_inode_from_id(u32 inode_id) const {
+Inode Ext2::get_inode_from_id(u32 inode_id) {
         assert(this->inode_bitmap->test_exist(inode_id));
         return Inode(this, _get_disk_inode_from_id(inode_id), inode_id);
 }

@@ -26,7 +26,7 @@ struct SuperBlock {
 struct Ext2 {
     i32 create(BlockDevice* block_device, u32 total_blocks, u32 inode_bitmap_blocks = INODE_BITMAP_BLOCKS);
     DiskInode* _get_disk_inode_from_id(const u32 inode_id) const;
-    Inode get_inode_from_id(u32 inode_id) const;
+    Inode get_inode_from_id(u32 inode_id);
     int rename(const char *oldpath, const char *newpath);
     void open(BlockDevice*);
     u32 _alloc_data();
